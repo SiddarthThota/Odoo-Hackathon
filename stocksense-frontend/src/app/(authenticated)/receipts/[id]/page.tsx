@@ -1,0 +1,197 @@
+"use client";
+
+import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Printer, Check, X, Search, ChevronDown, Plus } from "lucide-react";
+import Link from "next/link";
+
+type ReceiptStatus = "Draft" | "Ready" | "Done" | "Cancelled";
+
+export default function ReceiptDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const receiptId = params.id as string;
+
+  // Mock data state
+  const [status, setStatus] = useState<ReceiptStatus>("Ready");
+  const [productLines, setProductLines] = useState([
+    { id: 1, product: "[EL-001] Wireless Earbuds", demand: 50, done: 0 },
+    { id: 2, product: "[EL-002] Power Bank 10k", demand: 200, done: 0 },
+  ]);
+
+  const handleValidate = () => {
+    // In a real app, this would check if Done matches Demand, or ask for backorder
+    // For now, auto-fill Done to match Demand if 0, then complete
+    setProductLines(lines => lines.map(l => ({ ...l, done: l.done === 0 ? l.demand : l.done })));
+    setStatus("Done");
+  };
+
+  const handleCancel = () => {
+    setStatus("Cancelled");
+  };
+
+  const handleDoneChange = (id: number, val: number) => {
+    setProductLines(lines => lines.map(l => l.id === id ? { ...l, done: val } : l));
+  };
+
+  return (
+    <div className="mx-auto max-w-[1440px] w-full px-[24px] pt-[22px] pb-[32px]">
+      
+      {/* Top Bar */}
+      <div className="flex items-center gap-[8px] mb-[24px]">
+        <Link href="/receipts" className="text-[#6B7280] hover:text-[#1F2937] transition-colors">
+          <ArrowLeft className="h-[18px] w-[18px]" />
+        </Link>
+        <h1 className="text-[18px] md:text-[20px] font-semibold text-[#1F2937] leading-tight">
+          WH/IN/{receiptId}
+        </h1>
+        <div className={`ml-[8px] px-[8px] py-[2px] rounded-full text-[11px] font-medium border
+          ${status === 'Ready' ? 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]' : 
+            status === 'Done' ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]' : 
+            status === 'Cancelled' ? 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]' : 
+            'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]'}`}>
+          {status}
+        </div>
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
+        {status === 'Ready' && (
+          <button onClick={handleValidate} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+            <Check className="h-[14px] w-[14px]" /> Validate
+          </button>
+        )}
+        <button className="h-[32px] px-[16px] bg-white border border-[#E5E7EB] text-[#374151] text-[11px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors flex items-center gap-[6px]">
+          <Printer className="h-[14px] w-[14px]" /> Print
+        </button>
+        {status === 'Ready' && (
+          <button onClick={handleCancel} className="h-[32px] px-[16px] bg-white text-[#DC2626] text-[11px] font-medium rounded-[6px] hover:bg-[#FEF2F2] transition-colors flex items-center gap-[6px] ml-auto">
+            <X className="h-[14px] w-[14px]" /> Cancel
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-[24px]">
+        
+        {/* Left Col: Main Form & Lines */}
+        <div className="lg:col-span-2 space-y-[24px]">
+          
+          {/* Metadata */}
+          <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] p-[20px] shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+            <div className="grid grid-cols-2 gap-x-[32px] gap-y-[16px]">
+              <div>
+                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Receive From</label>
+                <div className="text-[13px] text-[#1F2937] font-medium">TechNova Suppliers Ltd</div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Operation Type</label>
+                <div className="text-[13px] text-[#1F2937] font-medium">WH: Receipts</div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Scheduled Date</label>
+                <div className="text-[13px] text-[#1F2937]">2023-11-20 10:00:00</div>
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Source Document</label>
+                <div className="text-[13px] text-[#1677D2] hover:underline cursor-pointer font-medium">PO00412</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Operations Tab */}
+          <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] overflow-hidden">
+            <div className="flex items-center gap-[24px] px-[20px] border-b border-[#E5E7EB] h-[44px]">
+              <div className="h-full flex items-center text-[12px] font-medium text-[#1677D2] border-b-2 border-[#1677D2]">
+                Operations
+              </div>
+              <div className="h-full flex items-center text-[12px] font-medium text-[#6B7280] hover:text-[#374151] cursor-pointer">
+                Additional Info
+              </div>
+            </div>
+            
+            <div className="p-[0px]">
+              <table className="w-full text-left">
+                <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                  <tr>
+                    <th className="py-[10px] px-[16px] text-[11px] font-medium text-[#6B7280] w-[50%]">Product</th>
+                    <th className="py-[10px] px-[16px] text-[11px] font-medium text-[#6B7280] text-right">Demand</th>
+                    <th className="py-[10px] px-[16px] text-[11px] font-medium text-[#6B7280] text-right">Done</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F1F2F4]">
+                  {productLines.map((line) => (
+                    <tr key={line.id} className="hover:bg-[#F8FAFC]">
+                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] font-medium">{line.product}</td>
+                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] text-right">{line.demand}</td>
+                      <td className="py-[12px] px-[16px] text-[12px] text-right">
+                        {status === 'Ready' ? (
+                          <input 
+                            type="number"
+                            value={line.done || ''}
+                            onChange={(e) => handleDoneChange(line.id, parseInt(e.target.value) || 0)}
+                            className="w-[60px] text-right border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]"
+                            placeholder="0"
+                          />
+                        ) : (
+                          <span className={line.done < line.demand ? 'text-[#DC2626] font-medium' : 'text-[#1F2937]'}>{line.done}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {status === 'Ready' && (
+                <div className="px-[16px] py-[12px] border-t border-[#F1F2F4]">
+                  <button className="text-[12px] text-[#1677D2] hover:text-[#0B6FCB] font-medium flex items-center gap-[4px]">
+                    <Plus className="h-[14px] w-[14px]" /> Add a line
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Col: Chatter / Log */}
+        <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-[8px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] h-fit flex flex-col">
+          <div className="px-[16px] py-[12px] border-b border-[#E5E7EB] flex items-center justify-between">
+            <h3 className="text-[12px] font-semibold text-[#1F2937]">Log Note</h3>
+          </div>
+          <div className="p-[16px] flex-1">
+            <div className="flex gap-[12px] mb-[20px]">
+              <div className="h-[28px] w-[28px] rounded-full bg-[#E5E7EB] flex items-center justify-center shrink-0 text-[#6B7280] text-[10px] font-bold">AD</div>
+              <div className="flex-1">
+                <textarea 
+                  className="w-full border border-[#E5E7EB] rounded-[6px] p-[8px] text-[11px] focus:outline-none focus:border-[#1677D2] resize-none"
+                  rows={2}
+                  placeholder="Log a note..."
+                ></textarea>
+                <button className="mt-[8px] bg-[#1F2937] text-white text-[11px] font-medium px-[12px] py-[4px] rounded-[4px] hover:bg-[#374151]">
+                  Log
+                </button>
+              </div>
+            </div>
+            
+            <div className="space-y-[16px]">
+              <div className="flex gap-[12px]">
+                <div className="h-[28px] w-[28px] rounded-full bg-[#1677D2] flex items-center justify-center shrink-0 text-white text-[10px] font-bold">S</div>
+                <div>
+                  <div className="text-[11px] font-medium text-[#1F2937]">System <span className="text-[#6B7280] font-normal text-[10px] ml-[4px]">2 hours ago</span></div>
+                  <div className="text-[11px] text-[#374151] mt-[2px]">Status changed from Draft to Ready</div>
+                </div>
+              </div>
+              <div className="flex gap-[12px]">
+                <div className="h-[28px] w-[28px] rounded-full bg-[#1677D2] flex items-center justify-center shrink-0 text-white text-[10px] font-bold">S</div>
+                <div>
+                  <div className="text-[11px] font-medium text-[#1F2937]">System <span className="text-[#6B7280] font-normal text-[10px] ml-[4px]">2 hours ago</span></div>
+                  <div className="text-[11px] text-[#374151] mt-[2px]">Receipt created</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}
