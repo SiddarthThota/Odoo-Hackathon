@@ -25,7 +25,11 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid credentials");
+      if (!err.response) {
+        setError("Network error: Could not connect to the server.");
+      } else {
+        setError(err.response?.data?.message || "Invalid credentials");
+      }
       setIsLoading(false);
     }
   };
@@ -74,7 +78,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-[36px] pr-[12px] h-[40px] text-[13px] border border-[#E5E7EB] rounded-[8px] focus:outline-none focus:border-[#2F5FDB] focus:ring-1 focus:ring-[#2F5FDB] placeholder:text-[#9CA3AF] text-[#1F2937]"
-                  placeholder="admin@inventrax.com"
+                  placeholder="admin@stocksense.com"
                 />
               </div>
             </div>

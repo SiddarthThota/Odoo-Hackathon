@@ -1,0 +1,9 @@
+*.md
+!README.md
+*.png
+node_modules/
+.env
+.env.local
+.next/
+dist/
+build/

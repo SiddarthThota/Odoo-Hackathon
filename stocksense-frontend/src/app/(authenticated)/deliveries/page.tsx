@@ -6,10 +6,13 @@ import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, 
 import { useRouter } from "next/navigation";
 
 const mockDeliveries = [
-  { id: "DEL-2023-001", date: "2023-10-24", partner: "TechStore Inc", warehouse: "Main Warehouse", status: "Done" },
-  { id: "DEL-2023-002", date: "2023-10-25", partner: "MegaMart", warehouse: "Distribution Center", status: "Ready" },
-  { id: "DEL-2023-003", date: "2023-10-26", partner: "Gadgets Corp", warehouse: "Main Warehouse", status: "Waiting" },
-  { id: "DEL-2023-004", date: "2023-10-27", partner: "Local Electronics", warehouse: "Distribution Center", status: "Draft" },
+  { id: "WH/OUT/001", date: "2026-09-04", partner: "ABC Clinic", location: "Rack-A-01", status: "Done" },
+  { id: "WH/OUT/002", date: "2026-09-06", partner: "CityCare Hospital", location: "Rack-A-02", status: "Done" },
+  { id: "WH/OUT/003", date: "2026-09-08", partner: "GreenCross Clinic", location: "Rack-B-01", status: "Ready" },
+  { id: "WH/OUT/004", date: "2026-09-12", partner: "Sunrise Medicals", location: "Rack-C-01", status: "Waiting" },
+  { id: "WH/OUT/005", date: "2026-09-13", partner: "WellCare Hospital", location: "Rack-C-02", status: "Done" },
+  { id: "WH/OUT/006", date: "2026-09-14", partner: "Prime Clinic", location: "Rack-B-02", status: "Cancelled" },
+  { id: "WH/OUT/007", date: "2026-09-15", partner: "Apollo Care Center", location: "Rack-A-03", status: "Done" },
 ];
 
 export default function DeliveriesPage() {
@@ -22,6 +25,7 @@ export default function DeliveriesPage() {
       case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
       case 'Waiting': return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
+      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -36,7 +40,10 @@ export default function DeliveriesPage() {
           <p className="text-[11px] md:text-[12px] text-[#6B7280] mt-[3px]">Manage outgoing orders to customers</p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <Button className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm">
+          <Button 
+            className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm"
+            onClick={() => router.push('/deliveries/new')}
+          >
             <Plus className="h-[14px] w-[14px] mr-[4px]" strokeWidth={2} />
             New Delivery
           </Button>
@@ -94,7 +101,7 @@ export default function DeliveriesPage() {
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Reference</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Date</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Partner</th>
-                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Warehouse</th>
+                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Location</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Status</th>
                 </tr>
               </thead>
@@ -107,7 +114,7 @@ export default function DeliveriesPage() {
                     <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{delivery.id}</td>
                     <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.date}</td>
                     <td className="h-[40px] px-[16px]">{delivery.partner}</td>
-                    <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.warehouse}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.location}</td>
                     <td className="h-[40px] px-[16px]">
                       <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[999px] text-[9px] font-medium border ${getStatusColor(delivery.status)}`}>
                         {delivery.status}
@@ -135,8 +142,8 @@ export default function DeliveriesPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mt-[16px]">
-          {["Draft", "Waiting", "Ready", "Done"].map(statusCol => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px] mt-[16px]">
+          {["Draft", "Waiting", "Ready", "Done", "Cancelled"].map(statusCol => (
             <div key={statusCol} className="flex flex-col gap-[12px]">
               <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
                 {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockDeliveries.filter(d => d.status === statusCol).length}</span>

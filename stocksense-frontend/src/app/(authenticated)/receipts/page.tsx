@@ -6,10 +6,14 @@ import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, 
 import { useRouter } from "next/navigation";
 
 const mockReceipts = [
-  { id: "RCP-2023-001", date: "2023-10-24", partner: "Acme Supplies", warehouse: "Main Warehouse", status: "Done" },
-  { id: "RCP-2023-002", date: "2023-10-25", partner: "Tech Components Ltd", warehouse: "Main Warehouse", status: "Ready" },
-  { id: "RCP-2023-003", date: "2023-10-26", partner: "Global Packaging", warehouse: "Distribution Center", status: "Waiting" },
-  { id: "RCP-2023-004", date: "2023-10-27", partner: "Acme Supplies", warehouse: "Main Warehouse", status: "Draft" },
+  { id: "WH/IN/001", date: "2026-09-01", partner: "Medico Distributors", location: "Rack-A-01", status: "Done" },
+  { id: "WH/IN/002", date: "2026-09-02", partner: "Apollo Pharma Supply", location: "Rack-A-02", status: "Done" },
+  { id: "WH/IN/003", date: "2026-09-03", partner: "HealthPlus Distributors", location: "Rack-B-01", status: "Done" },
+  { id: "WH/IN/004", date: "2026-09-05", partner: "MediSource India", location: "Rack-A-03", status: "Ready" },
+  { id: "WH/IN/005", date: "2026-09-07", partner: "CareMed Suppliers", location: "Rack-B-02", status: "Draft" },
+  { id: "WH/IN/006", date: "2026-09-09", partner: "LifeLine Pharma", location: "Rack-C-01", status: "Done" },
+  { id: "WH/IN/007", date: "2026-09-10", partner: "Medico Distributors", location: "Rack-C-02", status: "Done" },
+  { id: "WH/IN/008", date: "2026-09-11", partner: "HealthPlus Distributors", location: "Rack-C-03", status: "Cancelled" },
 ];
 
 export default function ReceiptsPage() {
@@ -21,7 +25,7 @@ export default function ReceiptsPage() {
     switch(status) {
       case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
-      case 'Waiting': return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
+      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -36,7 +40,10 @@ export default function ReceiptsPage() {
           <p className="text-[11px] md:text-[12px] text-[#6B7280] mt-[3px]">Manage incoming inventory from vendors</p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <Button className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm">
+          <Button 
+            className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm"
+            onClick={() => router.push('/receipts/new')}
+          >
             <Plus className="h-[14px] w-[14px] mr-[4px]" strokeWidth={2} />
             New Receipt
           </Button>
@@ -94,7 +101,7 @@ export default function ReceiptsPage() {
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Reference</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Date</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Partner</th>
-                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Warehouse</th>
+                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Location</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Status</th>
                 </tr>
               </thead>
@@ -107,7 +114,7 @@ export default function ReceiptsPage() {
                     <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{receipt.id}</td>
                     <td className="h-[40px] px-[16px] text-[#6B7280]">{receipt.date}</td>
                     <td className="h-[40px] px-[16px]">{receipt.partner}</td>
-                    <td className="h-[40px] px-[16px] text-[#6B7280]">{receipt.warehouse}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{receipt.location}</td>
                     <td className="h-[40px] px-[16px]">
                       <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[999px] text-[9px] font-medium border ${getStatusColor(receipt.status)}`}>
                         {receipt.status}
@@ -136,7 +143,7 @@ export default function ReceiptsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mt-[16px]">
-          {["Draft", "Waiting", "Ready", "Done"].map(statusCol => (
+          {["Draft", "Ready", "Done", "Cancelled"].map(statusCol => (
             <div key={statusCol} className="flex flex-col gap-[12px]">
               <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
                 {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockReceipts.filter(r => r.status === statusCol).length}</span>

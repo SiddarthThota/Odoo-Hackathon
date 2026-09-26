@@ -6,9 +6,12 @@ import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, 
 import { useRouter } from "next/navigation";
 
 const mockTransfers = [
-  { id: "INT-2023-001", date: "2023-10-24", source: "Main Warehouse", destination: "Distribution Center", status: "Done" },
-  { id: "INT-2023-002", date: "2023-10-25", source: "Main Warehouse", destination: "Store A", status: "Ready" },
-  { id: "INT-2023-003", date: "2023-10-26", source: "Distribution Center", destination: "Store B", status: "Waiting" },
+  { id: "WH/TRANS/001", date: "2026-09-10", source: "Hyderabad Pharmacy", destination: "Secunderabad Pharmacy", status: "Done" },
+  { id: "WH/TRANS/002", date: "2026-09-12", source: "Secunderabad Pharmacy", destination: "Banjara Pharmacy", status: "Done" },
+  { id: "WH/TRANS/003", date: "2026-09-16", source: "Hyderabad Pharmacy", destination: "Banjara Pharmacy", status: "Ready" },
+  { id: "WH/TRANS/004", date: "2026-09-17", source: "Banjara Pharmacy", destination: "Hyderabad Pharmacy", status: "Waiting" },
+  { id: "WH/TRANS/005", date: "2026-09-18", source: "Hyderabad Pharmacy", destination: "Secunderabad Pharmacy", status: "Cancelled" },
+  { id: "WH/TRANS/006", date: "2026-09-19", source: "Secunderabad Pharmacy", destination: "Hyderabad Pharmacy", status: "Done" },
 ];
 
 export default function TransfersPage() {
@@ -21,6 +24,7 @@ export default function TransfersPage() {
       case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
       case 'Waiting': return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
+      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -35,7 +39,10 @@ export default function TransfersPage() {
           <p className="text-[11px] md:text-[12px] text-[#6B7280] mt-[3px]">Move stock between company warehouses and locations</p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <Button className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm">
+          <Button 
+            className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm"
+            onClick={() => router.push('/transfers/new')}
+          >
             <Plus className="h-[14px] w-[14px] mr-[4px]" strokeWidth={2} />
             New Transfer
           </Button>
@@ -134,8 +141,8 @@ export default function TransfersPage() {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mt-[16px]">
-          {["Draft", "Waiting", "Ready", "Done"].map(statusCol => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px] mt-[16px]">
+          {["Draft", "Waiting", "Ready", "Done", "Cancelled"].map(statusCol => (
             <div key={statusCol} className="flex flex-col gap-[12px]">
               <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
                 {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockTransfers.filter(d => d.status === statusCol).length}</span>

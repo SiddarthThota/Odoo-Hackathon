@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const mockStock = [
   { id: "1", product: "Wireless Buds", sku: "EL-WB-001", warehouse: "Main Warehouse", location: "A1-R2-S3", onHand: 1240, available: 1200, uom: "Units" },
@@ -14,6 +15,7 @@ const mockStock = [
 
 export default function StockOverviewPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   return (
     <div className="mx-auto max-w-[1440px] w-full px-[24px] pt-[22px] pb-[32px]">
@@ -57,24 +59,28 @@ export default function StockOverviewPage() {
             <thead>
               <tr>
                 <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Product</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">SKU</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Warehouse</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Location</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA] text-right">On Hand</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA] text-right">Available</th>
-                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">UoM</th>
+                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA] text-right">per unit cost</th>
+                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA] text-right">On hand</th>
+                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA] text-right">Free to Use</th>
+                <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]"></th>
               </tr>
             </thead>
             <tbody className="text-[11px] text-[#1F2937]">
               {mockStock.map((item) => (
-                <tr key={item.id} className="border-b border-[#F1F2F4] hover:bg-[#F9FAFB] cursor-pointer transition-colors group">
+                <tr key={item.id} className="border-b border-[#F1F2F4] hover:bg-[#F9FAFB] transition-colors group">
                   <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{item.product}</td>
-                  <td className="h-[40px] px-[16px] text-[#6B7280] font-mono text-[10px]">{item.sku}</td>
-                  <td className="h-[40px] px-[16px] text-[#6B7280]">{item.warehouse}</td>
-                  <td className="h-[40px] px-[16px] text-[#6B7280]">{item.location}</td>
+                  <td className="h-[40px] px-[16px] text-[#6B7280] text-right">3000 Rs</td>
                   <td className="h-[40px] px-[16px] text-right font-medium">{item.onHand.toLocaleString()}</td>
                   <td className="h-[40px] px-[16px] text-right font-medium text-[#059669]">{item.available.toLocaleString()}</td>
-                  <td className="h-[40px] px-[16px] text-[#6B7280]">{item.uom}</td>
+                  <td className="h-[40px] px-[16px] text-right">
+                    <Button 
+                      variant="outline" 
+                      className="h-[24px] px-[8px] text-[10px] border-[#E5E7EB] text-[#1677D2] hover:bg-[#EFF6FF]"
+                      onClick={() => router.push(`/adjustments/new?productId=${item.id}&locationId=${item.location}`)}
+                    >
+                      Update
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

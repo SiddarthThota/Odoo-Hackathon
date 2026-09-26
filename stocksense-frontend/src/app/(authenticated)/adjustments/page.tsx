@@ -6,8 +6,14 @@ import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, 
 import { useRouter } from "next/navigation";
 
 const mockAdjustments = [
-  { id: "ADJ-2023-001", date: "2023-10-24", warehouse: "Main Warehouse", reason: "Annual Count", status: "Done" },
-  { id: "ADJ-2023-002", date: "2023-10-25", warehouse: "Distribution Center", reason: "Damaged Goods", status: "Draft" },
+  { id: "WH/ADJ/001", date: "2026-09-11", warehouse: "Hyderabad Pharmacy", reason: "Expired", status: "Done" },
+  { id: "WH/ADJ/002", date: "2026-09-13", warehouse: "Secunderabad Pharmacy", reason: "Damaged", status: "Done" },
+  { id: "WH/ADJ/003", date: "2026-09-16", warehouse: "Hyderabad Pharmacy", reason: "Count Correction", status: "Ready" },
+  { id: "WH/ADJ/004", date: "2026-09-20", warehouse: "Banjara Pharmacy", reason: "Expired", status: "Draft" },
+  { id: "WH/ADJ/005", date: "2026-09-21", warehouse: "Hyderabad Pharmacy", reason: "Damaged", status: "Done" },
+  { id: "WH/ADJ/006", date: "2026-09-22", warehouse: "Banjara Pharmacy", reason: "Count Correction", status: "Done" },
+  { id: "WH/ADJ/007", date: "2026-09-23", warehouse: "Secunderabad Pharmacy", reason: "Lost", status: "Cancelled" },
+  { id: "WH/ADJ/008", date: "2026-09-24", warehouse: "Hyderabad Pharmacy", reason: "Expired", status: "Done" },
 ];
 
 export default function AdjustmentsPage() {
@@ -18,7 +24,9 @@ export default function AdjustmentsPage() {
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
+      case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
       case 'Draft': return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
+      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -33,7 +41,10 @@ export default function AdjustmentsPage() {
           <p className="text-[11px] md:text-[12px] text-[#6B7280] mt-[3px]">Correct stock levels and record shrinkage</p>
         </div>
         <div className="flex items-center gap-[8px]">
-          <Button className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm">
+          <Button 
+            className="h-[32px] px-[12px] text-[11px] font-medium bg-[#1677D2] hover:bg-[#1677D2]/90 text-white rounded-[6px] shadow-sm"
+            onClick={() => router.push('/adjustments/new')}
+          >
             <Plus className="h-[14px] w-[14px] mr-[4px]" strokeWidth={2} />
             New Adjustment
           </Button>
@@ -133,7 +144,7 @@ export default function AdjustmentsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mt-[16px]">
-          {["Draft", "Done"].map(statusCol => (
+          {["Draft", "Ready", "Done", "Cancelled"].map(statusCol => (
             <div key={statusCol} className="flex flex-col gap-[12px]">
               <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
                 {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockAdjustments.filter(d => d.status === statusCol).length}</span>

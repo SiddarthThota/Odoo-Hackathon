@@ -10,11 +10,17 @@ type ReceiptStatus = "Draft" | "Ready" | "Done" | "Cancelled";
 export default function ReceiptDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const receiptId = params.id as string;
+  const rawId = params?.id;
+  const receiptId = Array.isArray(rawId) ? rawId.map(decodeURIComponent).join('/') : decodeURIComponent(rawId as string || 'new');
+  const isNew = receiptId === 'new';
 
   // Mock data state
-  const [status, setStatus] = useState<ReceiptStatus>("Ready");
-  const [productLines, setProductLines] = useState([
+  const [status, setStatus] = useState<ReceiptStatus>(isNew ? "Draft" : "Ready");
+  const [partner, setPartner] = useState(isNew ? "" : "TechNova Suppliers Ltd");
+  const [scheduledDate, setScheduledDate] = useState(isNew ? "" : "2023-11-20 10:00:00");
+  const [sourceDoc, setSourceDoc] = useState(isNew ? "" : "PO00412");
+  
+  const [productLines, setProductLines] = useState(isNew ? [] : [
     { id: 1, product: "[EL-001] Wireless Earbuds", demand: 50, done: 0 },
     { id: 2, product: "[EL-002] Power Bank 10k", demand: 200, done: 0 },
   ]);
@@ -43,7 +49,7 @@ export default function ReceiptDetailPage() {
           <ArrowLeft className="h-[18px] w-[18px]" />
         </Link>
         <h1 className="text-[18px] md:text-[20px] font-semibold text-[#1F2937] leading-tight">
-          WH/IN/{receiptId}
+          {isNew ? 'New Receipt' : receiptId}
         </h1>
         <div className={`ml-[8px] px-[8px] py-[2px] rounded-full text-[11px] font-medium border
           ${status === 'Ready' ? 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]' : 
@@ -56,15 +62,27 @@ export default function ReceiptDetailPage() {
 
       {/* Action Bar */}
       <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
-        {status === 'Ready' && (
+        {isNew ? (
+          <button onClick={() => router.push('/receipts')} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+            Save
+          </button>
+        ) : status === 'Draft' ? (
+          <button onClick={() => setStatus("Ready")} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+            Mark as To Do
+          </button>
+        ) : status === 'Ready' ? (
           <button onClick={handleValidate} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             <Check className="h-[14px] w-[14px]" /> Validate
           </button>
+        ) : null}
+        
+        {!isNew && status === 'Done' && (
+          <button className="h-[32px] px-[16px] bg-white border border-[#E5E7EB] text-[#374151] text-[11px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors flex items-center gap-[6px]">
+            <Printer className="h-[14px] w-[14px]" /> Print
+          </button>
         )}
-        <button className="h-[32px] px-[16px] bg-white border border-[#E5E7EB] text-[#374151] text-[11px] font-medium rounded-[6px] hover:bg-[#F9FAFB] transition-colors flex items-center gap-[6px]">
-          <Printer className="h-[14px] w-[14px]" /> Print
-        </button>
-        {status === 'Ready' && (
+        
+        {(status === 'Draft' || status === 'Ready') && (
           <button onClick={handleCancel} className="h-[32px] px-[16px] bg-white text-[#DC2626] text-[11px] font-medium rounded-[6px] hover:bg-[#FEF2F2] transition-colors flex items-center gap-[6px] ml-auto">
             <X className="h-[14px] w-[14px]" /> Cancel
           </button>
@@ -81,19 +99,34 @@ export default function ReceiptDetailPage() {
             <div className="grid grid-cols-2 gap-x-[32px] gap-y-[16px]">
               <div>
                 <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Receive From</label>
-                <div className="text-[13px] text-[#1F2937] font-medium">TechNova Suppliers Ltd</div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Operation Type</label>
-                <div className="text-[13px] text-[#1F2937] font-medium">WH: Receipts</div>
+                {isNew ? (
+                  <input type="text" value={partner} onChange={e => setPartner(e.target.value)} className="w-full border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]" placeholder="e.g. TechNova Suppliers Ltd" />
+                ) : (
+                  <div className="text-[13px] text-[#1F2937] font-medium">{partner}</div>
+                )}
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Scheduled Date</label>
-                <div className="text-[13px] text-[#1F2937]">2023-11-20 10:00:00</div>
+                {isNew ? (
+                  <input type="datetime-local" value={scheduledDate} onChange={e => setScheduledDate(e.target.value)} className="w-full border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]" />
+                ) : (
+                  <div className="text-[13px] text-[#1F2937]">{scheduledDate}</div>
+                )}
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Responsible</label>
+                <div className="text-[13px] text-[#1F2937] font-medium flex items-center gap-2">
+                  <div className="h-[16px] w-[16px] rounded-full bg-[#E5E7EB] flex items-center justify-center shrink-0 text-[#6B7280] text-[8px] font-bold">A</div>
+                  Admin
+                </div>
               </div>
               <div>
                 <label className="block text-[11px] font-medium text-[#6B7280] mb-[4px]">Source Document</label>
-                <div className="text-[13px] text-[#1677D2] hover:underline cursor-pointer font-medium">PO00412</div>
+                {isNew ? (
+                  <input type="text" value={sourceDoc} onChange={e => setSourceDoc(e.target.value)} className="w-full border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]" placeholder="e.g. PO00412" />
+                ) : (
+                  <div className="text-[13px] text-[#1677D2] hover:underline cursor-pointer font-medium">{sourceDoc}</div>
+                )}
               </div>
             </div>
           </div>
@@ -121,8 +154,20 @@ export default function ReceiptDetailPage() {
                 <tbody className="divide-y divide-[#F1F2F4]">
                   {productLines.map((line) => (
                     <tr key={line.id} className="hover:bg-[#F8FAFC]">
-                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] font-medium">{line.product}</td>
-                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] text-right">{line.demand}</td>
+                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] font-medium">
+                        {isNew ? (
+                          <input type="text" value={line.product} onChange={e => setProductLines(lines => lines.map(l => l.id === line.id ? { ...l, product: e.target.value } : l))} className="w-full border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]" placeholder="Product name" />
+                        ) : (
+                          line.product
+                        )}
+                      </td>
+                      <td className="py-[12px] px-[16px] text-[12px] text-[#1F2937] text-right">
+                        {isNew ? (
+                          <input type="number" value={line.demand} onChange={e => setProductLines(lines => lines.map(l => l.id === line.id ? { ...l, demand: parseInt(e.target.value) || 0 } : l))} className="w-[60px] text-right border border-[#E5E7EB] rounded-[4px] px-[8px] py-[4px] text-[12px] focus:outline-none focus:border-[#1677D2]" placeholder="1" />
+                        ) : (
+                          line.demand
+                        )}
+                      </td>
                       <td className="py-[12px] px-[16px] text-[12px] text-right">
                         {status === 'Ready' ? (
                           <input 
@@ -140,9 +185,9 @@ export default function ReceiptDetailPage() {
                   ))}
                 </tbody>
               </table>
-              {status === 'Ready' && (
+              {(status === 'Ready' || isNew) && (
                 <div className="px-[16px] py-[12px] border-t border-[#F1F2F4]">
-                  <button className="text-[12px] text-[#1677D2] hover:text-[#0B6FCB] font-medium flex items-center gap-[4px]">
+                  <button onClick={() => setProductLines([...productLines, { id: Date.now(), product: "New Product", demand: 1, done: 0 }])} className="text-[12px] text-[#1677D2] hover:text-[#0B6FCB] font-medium flex items-center gap-[4px]">
                     <Plus className="h-[14px] w-[14px]" /> Add a line
                   </button>
                 </div>

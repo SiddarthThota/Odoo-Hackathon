@@ -33,7 +33,6 @@ export function Navbar() {
             InventraX
           </Link>
 
-          {/* Nav Items */}
           <div className="hidden md:flex items-center gap-[4px] text-[11px] font-medium ml-[12px]">
             <Link href="/dashboard" className={navItemClass("/dashboard")}>
               Dashboard
@@ -51,33 +50,17 @@ export function Navbar() {
                   <Link href="/deliveries" className="w-full h-full flex items-center px-2">Deliveries</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/transfers" className="w-full h-full flex items-center px-2">Internal Transfers</Link>
+                  <Link href="/adjustments" className="w-full h-full flex items-center px-2">Adjustments</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/adjustments" className="w-full h-full flex items-center px-2">Inventory Adjustments</Link>
+                  <Link href="/transfers" className="w-full h-full flex items-center px-2">Transfers</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger className={navItemClass("/stock")}>
-                Stock <ChevronDown className="h-[12px] w-[12px]" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="bg-[#FFFFFF] border-[#E5E7EB] rounded-[7px] shadow-[0_2px_6px_rgba(0,0,0,0.04)] w-[160px]">
-                <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/products" className="w-full h-full flex items-center px-2">Products</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/stock" className="w-full h-full flex items-center px-2">Stock Overview</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/settings/warehouses" className="w-full h-full flex items-center px-2">Warehouses</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/settings/locations" className="w-full h-full flex items-center px-2">Locations</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link href="/stock" className={navItemClass("/stock")}>
+              Stock
+            </Link>
 
             <Link href="/move-history" className={navItemClass("/move-history")}>
               Move History
@@ -89,10 +72,10 @@ export function Navbar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="bg-[#FFFFFF] border-[#E5E7EB] rounded-[7px] shadow-[0_2px_6px_rgba(0,0,0,0.04)] w-[160px]">
                 <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/settings/warehouses" className="w-full h-full flex items-center px-2">Warehouses</Link>
+                  <Link href="/settings/warehouses" className="w-full h-full flex items-center px-2">Warehouse</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                  <Link href="/settings/reorder-rules" className="w-full h-full flex items-center px-2">Reordering Rules</Link>
+                  <Link href="/settings/locations" className="w-full h-full flex items-center px-2">Locations</Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

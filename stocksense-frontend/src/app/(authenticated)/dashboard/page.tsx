@@ -42,6 +42,69 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Action Widgets Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-[12px] mb-[16px]">
+        {/* Receipt Widget */}
+        <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] p-[14px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-[#D9E6FB] p-2 rounded-lg">
+                <Package className="h-5 w-5 text-[#2F5FDB]" />
+              </div>
+              <h2 className="text-[14px] font-semibold text-[#1F2937]">Receipts</h2>
+            </div>
+            <button className="text-[#9CA3AF] hover:text-[#6B7280]">
+              <MoreHorizontal className="h-[14px] w-[14px]" strokeWidth={2} />
+            </button>
+          </div>
+          <div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">12 <span className="text-[14px] font-normal text-[#6B7280]">to receive</span></div>
+            <div className="flex items-center gap-4 text-[12px]">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#E5484D]"></span>
+                <span className="text-[#6B7280]">2 Late</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+                <span className="text-[#6B7280]">10 Operations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Delivery Widget */}
+        <div className="bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] p-[14px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="bg-[#FEE2E2] p-2 rounded-lg">
+                <Activity className="h-5 w-5 text-[#E5484D]" />
+              </div>
+              <h2 className="text-[14px] font-semibold text-[#1F2937]">Deliveries</h2>
+            </div>
+            <button className="text-[#9CA3AF] hover:text-[#6B7280]">
+              <MoreHorizontal className="h-[14px] w-[14px]" strokeWidth={2} />
+            </button>
+          </div>
+          <div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">8 <span className="text-[14px] font-normal text-[#6B7280]">to deliver</span></div>
+            <div className="flex items-center gap-4 text-[12px]">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#E5484D]"></span>
+                <span className="text-[#6B7280]">1 Late</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#F5A623]"></span>
+                <span className="text-[#6B7280]">3 Waiting</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+                <span className="text-[#6B7280]">4 Operations</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* KPI Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[12px] mb-[16px]">
         {/* KPI 1: Total Inventory Value */}
