@@ -104,7 +104,7 @@ export default function AdjustmentDetailPage() {
     const newOperation = {
       id: newIdStr,
       reference_number: newIdStr,
-      type: "ADJUSTMENT" as const,
+      operation_type: "ADJUSTMENT" as const,
       status: "DRAFT" as const, // Draft
       source_or_party: "Inventory",
       destination_or_warehouse: "Inventory",

@@ -87,7 +87,7 @@ export default function TransferDetailPage() {
     const newOperation = {
       id: newIdStr,
       reference_number: newIdStr,
-      type: "TRANSFER" as const,
+      operation_type: "TRANSFER" as const,
       status: "DRAFT" as const,
       source_or_party: sourceLoc,
       destination_or_warehouse: destLoc,
