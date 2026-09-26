@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 import Cookies from 'js-cookie';
-import { api } from './axios';
+import axios from 'axios';
+
+const AUTH_API_URL = 'http://localhost:3001/api/v1/auth';
 
 interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: 'ADMIN' | 'MANAGER' | 'STAFF';
 }
 
 interface AuthState {
@@ -26,26 +28,28 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   login: async (email, password) => {
-    // Mock login for now since auth endpoint is not available
-    const mockUser = {
-      id: 'mock-user-id',
-      email: email,
-      firstName: 'Admin',
-      lastName: 'User',
-      role: 'admin'
-    };
-    Cookies.set('accessToken', 'mock-access-token');
-    Cookies.set('refreshToken', 'mock-refresh-token');
-    set({ user: mockUser, isAuthenticated: true, isLoading: false });
-  },
-
-  register: async (firstName, lastName, email, password) => {
-    const response = await api.post('/auth/register', { firstName, lastName, email, password });
-    if (response.data.success) {
-      const { accessToken, refreshToken, user } = response.data.data;
+    try {
+      const response = await axios.post(`${AUTH_API_URL}/login`, { email, password });
+      const { accessToken, refreshToken, user } = response.data.data ? response.data.data : response.data;
       Cookies.set('accessToken', accessToken);
       Cookies.set('refreshToken', refreshToken);
       set({ user, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      console.error('Login failed', error);
+      throw error;
+    }
+  },
+
+  register: async (firstName, lastName, email, password) => {
+    try {
+      const response = await axios.post(`${AUTH_API_URL}/register`, { firstName, lastName, email, password });
+      const { accessToken, refreshToken, user } = response.data.data ? response.data.data : response.data;
+      Cookies.set('accessToken', accessToken);
+      Cookies.set('refreshToken', refreshToken);
+      set({ user, isAuthenticated: true, isLoading: false });
+    } catch (error) {
+      console.error('Register failed', error);
+      throw error;
     }
   },
 
@@ -66,16 +70,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
 
     try {
-      const response = await api.get('/auth/me');
-      if (response.data.success) {
-        set({
-          user: response.data.data,
-          isAuthenticated: true,
-          isLoading: false,
-        });
-      }
+      const response = await axios.get(`${AUTH_API_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      set({
+        user: response.data.data ? response.data.data : response.data,
+        isAuthenticated: true,
+        isLoading: false,
+      });
     } catch (error) {
       console.error('Auth check failed', error);
+      Cookies.remove('accessToken');
+      Cookies.remove('refreshToken');
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },

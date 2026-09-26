@@ -1,4 +1,4 @@
-export type UserRole = 'InventoryManager' | 'WarehouseStaff';
+export type UserRole = 'ADMIN' | 'MANAGER' | 'STAFF';
 
 export interface AuthUser {
   sub: string;

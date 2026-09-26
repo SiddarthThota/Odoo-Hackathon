@@ -38,9 +38,9 @@ export class JwtAuthGuard implements CanActivate {
       const role = request.headers['x-dev-user-role'] as UserRole | undefined;
       request.user = {
         sub: (request.headers['x-dev-user-id'] as string | undefined) ?? 'dev-user',
-        role: role && ['InventoryManager', 'WarehouseStaff'].includes(role)
+        role: role && ['ADMIN', 'MANAGER', 'STAFF'].includes(role)
           ? role
-          : 'InventoryManager',
+          : 'MANAGER',
       } satisfies AuthUser;
       return true;
     }
@@ -58,7 +58,7 @@ export class JwtAuthGuard implements CanActivate {
         throw new UnauthorizedException('JWT must contain sub and role');
       }
 
-      if (!['InventoryManager', 'WarehouseStaff'].includes(payload.role)) {
+      if (!['ADMIN', 'MANAGER', 'STAFF'].includes(payload.role)) {
         throw new UnauthorizedException('Unsupported user role');
       }
 

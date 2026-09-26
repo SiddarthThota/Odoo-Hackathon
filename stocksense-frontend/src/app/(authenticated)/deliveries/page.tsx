@@ -11,9 +11,8 @@ export default function DeliveriesPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
 
-  const deliveries = useOperationsStore((state) => 
-    state.operations.filter(op => op.operation_type === 'DELIVERY')
-  );
+  const operations = useOperationsStore((state) => state.operations);
+  const deliveries = operations.filter(op => op.operation_type === 'DELIVERY');
 
   const filteredDeliveries = deliveries.filter(d => 
     d.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 

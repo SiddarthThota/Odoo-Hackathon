@@ -11,9 +11,8 @@ export default function TransfersPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
 
-  const transfers = useOperationsStore((state) => 
-    state.operations.filter(op => op.operation_type === 'TRANSFER')
-  );
+  const operations = useOperationsStore((state) => state.operations);
+  const transfers = operations.filter(op => op.operation_type === 'TRANSFER');
 
   const filteredTransfers = transfers.filter(t => 
     t.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 

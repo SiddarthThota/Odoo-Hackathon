@@ -31,14 +31,14 @@ export class TransfersController {
   }
 
   @Post(':id/validate')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Validate transfer and atomically move stock' })
   validate(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.transfersService.validate(id, user);
   }
 
   @Post(':id/cancel')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Cancel internal transfer' })
   cancel(@Param('id') id: string) {
     return this.transfersService.cancel(id);

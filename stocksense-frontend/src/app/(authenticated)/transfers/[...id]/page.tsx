@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Check, X, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOperationsStore } from "@/store/operations";
+import { useAuthStore } from "@/lib/auth-store";
 
 type TransferStatus = "Draft" | "Ready" | "Done" | "Cancelled";
 
@@ -16,6 +17,7 @@ export default function TransferDetailPage() {
   const isNew = transferId === 'new';
 
   const operations = useOperationsStore((state) => state.operations);
+  const user = useAuthStore((state) => state.user);
 
   // Data state
   const [status, setStatus] = useState<TransferStatus>(isNew ? "Draft" : "Ready");
@@ -34,10 +36,10 @@ export default function TransferDetailPage() {
       if (op) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setStatus(
-          op.status === 'COMPLETED' ? 'Done' :
-          op.status === 'APPROVED' ? 'Ready' :
-          op.status === 'PENDING' ? 'Draft' :
-          op.status === 'CANCELLED' ? 'Cancelled' : 'Ready'
+          op.status === 'DONE' ? 'Done' :
+          op.status === 'READY' ? 'Ready' :
+          op.status === 'DRAFT' ? 'Draft' :
+          op.status === 'CANCELED' ? 'Cancelled' : 'Ready'
         );
         setSourceLoc(op.source_or_party);
         setDestLoc(op.destination_or_warehouse);
@@ -46,7 +48,7 @@ export default function TransferDetailPage() {
           id: parseInt(op.id) || Date.now(),
           product: op.product,
           demand: op.quantity,
-          done: op.status === 'COMPLETED' ? op.quantity : 0
+          done: op.status === 'DONE' ? op.quantity : 0
         }]);
       }
     }
@@ -54,15 +56,24 @@ export default function TransferDetailPage() {
 
   const handleMarkReady = () => {
     setStatus("Ready");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(transferId, { status: "READY" });
+    }
   };
 
   const handleValidate = () => {
     setProductLines(lines => lines.map(l => ({ ...l, done: l.done === 0 ? l.demand : l.done })));
     setStatus("Done");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(transferId, { status: "DONE" });
+    }
   };
 
   const handleCancel = () => {
     setStatus("Cancelled");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(transferId, { status: "CANCELED" });
+    }
   };
 
   const handleDoneChange = (id: number, val: number) => {
@@ -77,16 +88,17 @@ export default function TransferDetailPage() {
       id: newIdStr,
       reference_number: newIdStr,
       type: "TRANSFER" as const,
-      status: "DRAFT" as const, // DRAFT maps to Draft
+      status: "DRAFT" as const,
       source_or_party: sourceLoc,
       destination_or_warehouse: destLoc,
       scheduled_date: scheduledDate || new Date().toISOString().split('T')[0],
       operation_date: scheduledDate ? scheduledDate.split(' ')[0] : new Date().toISOString().split('T')[0],
-      product: productLines.length > 0 ? productLines[0].product : "Unknown Product", // We just take the first one for simplicity like the CSV
+      product: productLines.length > 0 ? productLines[0].product : "Unknown Product",
       quantity: productLines.reduce((acc, curr) => acc + curr.demand, 0),
       location: sourceLoc,
-      direction: "INTERNAL" as const,
-      reason: "Internal Transfer"
+      direction: "TRANSFER" as const,
+      reason: "Internal Transfer",
+      created_by: user ? `${user.firstName} ${user.lastName}` : 'System'
     };
 
     useOperationsStore.getState().addOperation(newOperation);

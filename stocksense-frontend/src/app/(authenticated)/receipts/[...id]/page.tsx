@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Printer, Check, X, Search, ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOperationsStore } from "@/store/operations";
+import { useAuthStore } from "@/lib/auth-store";
 
 type ReceiptStatus = "Draft" | "Ready" | "Done" | "Cancelled";
 
@@ -16,6 +17,7 @@ export default function ReceiptDetailPage() {
   const isNew = receiptId === 'new';
 
   const operations = useOperationsStore((state) => state.operations);
+  const user = useAuthStore((state) => state.user);
 
   // Data state
   const [status, setStatus] = useState<ReceiptStatus>(isNew ? "Draft" : "Ready");
@@ -33,10 +35,10 @@ export default function ReceiptDetailPage() {
       const op = operations.find(o => o.id === receiptId);
       if (op) {
         setStatus(
-          op.status === 'COMPLETED' ? 'Done' :
-          op.status === 'APPROVED' ? 'Ready' :
-          op.status === 'PENDING' ? 'Draft' :
-          op.status === 'CANCELLED' ? 'Cancelled' : 'Ready'
+          op.status === 'DONE' ? 'Done' :
+          op.status === 'READY' ? 'Ready' :
+          op.status === 'DRAFT' ? 'Draft' :
+          op.status === 'CANCELED' ? 'Cancelled' : 'Ready'
         );
         setPartner(op.source_or_party);
         setScheduledDate(op.operation_date + " 10:00:00");
@@ -45,7 +47,7 @@ export default function ReceiptDetailPage() {
           id: parseInt(op.id) || Date.now(),
           product: op.product,
           demand: op.quantity,
-          done: op.status === 'COMPLETED' ? op.quantity : 0
+          done: op.status === 'DONE' ? op.quantity : 0
         }]);
       }
     }
@@ -56,10 +58,23 @@ export default function ReceiptDetailPage() {
     // For now, auto-fill Done to match Demand if 0, then complete
     setProductLines(lines => lines.map(l => ({ ...l, done: l.done === 0 ? l.demand : l.done })));
     setStatus("Done");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(receiptId, { status: "DONE" });
+    }
   };
 
   const handleCancel = () => {
     setStatus("Cancelled");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(receiptId, { status: "CANCELED" });
+    }
+  };
+
+  const handleMarkToDo = () => {
+    setStatus("Ready");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(receiptId, { status: "READY" });
+    }
   };
 
   const handleDoneChange = (id: number, val: number) => {
@@ -73,7 +88,7 @@ export default function ReceiptDetailPage() {
     }
     useOperationsStore.getState().addOperation({
        operation_type: 'RECEIPT',
-       status: 'PENDING',
+       status: 'DRAFT',
        source_or_party: partner,
        destination_or_warehouse: "Hyderabad Pharmacy",
        location: "Rack-A-01",
@@ -82,7 +97,7 @@ export default function ReceiptDetailPage() {
        direction: 'IN',
        reason: 'PURCHASE',
        operation_date: new Date().toISOString().split('T')[0],
-       created_by: 'admin'
+       created_by: user ? `${user.firstName} ${user.lastName}` : 'System'
     });
     router.push('/receipts');
   };
@@ -114,7 +129,7 @@ export default function ReceiptDetailPage() {
             Save
           </button>
         ) : status === 'Draft' ? (
-          <button onClick={() => setStatus("Ready")} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+          <button onClick={handleMarkToDo} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             Mark as To Do
           </button>
         ) : status === 'Ready' ? (

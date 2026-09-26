@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Printer, Check, X, Box, ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOperationsStore } from "@/store/operations";
+import { useAuthStore } from "@/lib/auth-store";
 
 type DeliveryStatus = "Draft" | "Waiting" | "Ready" | "Done" | "Cancelled";
 
@@ -16,6 +17,7 @@ export default function DeliveryDetailPage() {
   const isNew = deliveryId === 'new';
 
   const operations = useOperationsStore((state) => state.operations);
+  const user = useAuthStore((state) => state.user);
 
   // Data state
   const [status, setStatus] = useState<DeliveryStatus>(isNew ? "Draft" : "Ready");
@@ -33,10 +35,10 @@ export default function DeliveryDetailPage() {
       const op = operations.find(o => o.id === deliveryId);
       if (op) {
         setStatus(
-          op.status === 'COMPLETED' ? 'Done' :
-          op.status === 'APPROVED' ? 'Ready' :
-          op.status === 'PENDING' ? 'Waiting' :
-          op.status === 'CANCELLED' ? 'Cancelled' : 'Draft'
+          op.status === 'DONE' ? 'Done' :
+          op.status === 'READY' ? 'Ready' :
+          op.status === 'WAITING' ? 'Waiting' :
+          op.status === 'CANCELED' ? 'Cancelled' : 'Draft'
         );
         setPartner(op.source_or_party);
         setScheduledDate(op.operation_date + " 14:00:00");
@@ -45,21 +47,26 @@ export default function DeliveryDetailPage() {
           id: parseInt(op.id) || Date.now(),
           product: op.product,
           demand: op.quantity,
-          reserved: op.status === 'COMPLETED' || op.status === 'APPROVED' ? op.quantity : 0,
-          done: op.status === 'COMPLETED' ? op.quantity : 0
+          reserved: op.status === 'DONE' || op.status === 'READY' ? op.quantity : 0,
+          done: op.status === 'DONE' ? op.quantity : 0
         }]);
       }
     }
   }, [isNew, deliveryId, operations]);
 
   const handleValidate = () => {
-    // Fill done with reserved, then mark as Done
     setProductLines(lines => lines.map(l => ({ ...l, done: l.done === 0 ? l.reserved : l.done })));
     setStatus("Done");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(deliveryId, { status: "DONE" });
+    }
   };
 
   const handleCancel = () => {
     setStatus("Cancelled");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(deliveryId, { status: "CANCELED" });
+    }
   };
 
   const handleDoneChange = (id: number, val: number) => {
@@ -73,7 +80,7 @@ export default function DeliveryDetailPage() {
     }
     useOperationsStore.getState().addOperation({
        operation_type: 'DELIVERY',
-       status: 'PENDING',
+       status: 'DRAFT',
        source_or_party: partner,
        destination_or_warehouse: "Hyderabad Pharmacy",
        location: "Rack-A-01",
@@ -82,18 +89,24 @@ export default function DeliveryDetailPage() {
        direction: 'OUT',
        reason: 'SALE',
        operation_date: new Date().toISOString().split('T')[0],
-       created_by: 'admin'
+       created_by: user ? `${user.firstName} ${user.lastName}` : 'System'
     });
     router.push('/deliveries');
   };
 
   const checkAvailability = () => {
-    // Mock: check stock, reserve anything that is missing
-    const outOfStockLines = productLines.filter(l => l.reserved < l.demand);
-    if (outOfStockLines.length > 0) {
-      alert(`Notification: Out of stock for ${outOfStockLines.map(l => l.product).join(", ")}`);
-    } else {
-      setStatus("Ready");
+    // Mock: auto-reserve the stock so the user can proceed
+    setProductLines(lines => lines.map(l => ({ ...l, reserved: l.demand })));
+    setStatus("Ready");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(deliveryId, { status: "READY" });
+    }
+  };
+
+  const handleMarkToDo = () => {
+    setStatus("Waiting");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(deliveryId, { status: "WAITING" });
     }
   };
 
@@ -125,7 +138,7 @@ export default function DeliveryDetailPage() {
             Save
           </button>
         ) : status === 'Draft' ? (
-          <button onClick={() => setStatus("Waiting")} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+          <button onClick={handleMarkToDo} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             To Do
           </button>
         ) : status === 'Waiting' ? (

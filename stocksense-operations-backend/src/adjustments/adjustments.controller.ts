@@ -31,7 +31,7 @@ export class AdjustmentsController {
   }
 
   @Post(':id/apply')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Apply adjustment delta to Inventory Service' })
   apply(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.adjustmentsService.apply(id, user);

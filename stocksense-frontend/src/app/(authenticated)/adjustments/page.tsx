@@ -11,9 +11,8 @@ export default function AdjustmentsPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
 
-  const adjustments = useOperationsStore((state) => 
-    state.operations.filter(op => op.operation_type === 'ADJUSTMENT')
-  );
+  const operations = useOperationsStore((state) => state.operations);
+  const adjustments = operations.filter(op => op.operation_type === 'ADJUSTMENT');
 
   const filteredAdjustments = adjustments.filter(adj => 
     adj.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 

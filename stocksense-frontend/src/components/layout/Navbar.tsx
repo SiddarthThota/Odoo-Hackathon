@@ -9,9 +9,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, User, LogOut, Bell } from "lucide-react";
+import { useAuthStore } from "@/lib/auth-store";
 
 export function Navbar() {
   const pathname = usePathname();
+  const { user, logout } = useAuthStore();
 
   const isActive = (path: string) => {
     return pathname.startsWith(path);
@@ -95,17 +97,22 @@ export function Navbar() {
               <div className="h-[24px] w-[24px] rounded-full bg-[#E5E7EB] flex items-center justify-center overflow-hidden">
                 <User className="h-[14px] w-[14px] text-[#6B7280]" strokeWidth={1.75} />
               </div>
-              <span className="text-[11px] font-medium text-[#1F2937] hidden md:block">Admin</span>
+              <span className="text-[11px] font-medium text-[#1F2937] hidden md:block">
+                {user ? `${user.firstName} ${user.lastName}` : 'Admin'}
+              </span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="bg-[#FFFFFF] border-[#E5E7EB] rounded-[7px] shadow-[0_2px_6px_rgba(0,0,0,0.04)] w-[140px]">
               <DropdownMenuItem className="h-[32px] text-[11px] hover:bg-[#F5F8FC] cursor-pointer p-0">
                 <Link href="/profile" className="w-full h-full flex items-center px-2">My Profile</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="h-[32px] text-[11px] text-[#E5484D] hover:bg-[#F5F8FC] cursor-pointer p-0">
-                <Link href="/login" className="w-full h-full flex items-center px-2">
+              <DropdownMenuItem 
+                className="h-[32px] text-[11px] text-[#E5484D] hover:bg-[#F5F8FC] cursor-pointer p-0"
+                onClick={() => logout()}
+              >
+                <div className="w-full h-full flex items-center px-2">
                   <LogOut className="mr-2 h-[12px] w-[12px]" strokeWidth={2} />
                   Logout
-                </Link>
+                </div>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

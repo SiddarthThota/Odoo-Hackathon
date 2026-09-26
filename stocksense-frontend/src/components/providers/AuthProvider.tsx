@@ -24,12 +24,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         router.push('/dashboard');
       }
     }
-  }, [isLoading, isAuthenticated, pathname, router]);
+  }, [isAuthenticated, isLoading, pathname, router]);
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 text-[#2F5FDB] animate-spin" />
+          <p className="text-sm text-[#6B7280]">Loading application...</p>
+        </div>
       </div>
     );
   }

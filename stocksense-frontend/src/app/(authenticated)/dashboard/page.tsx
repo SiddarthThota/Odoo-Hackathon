@@ -47,21 +47,21 @@ export default function DashboardPage() {
 
   // Compute Receipts stats
   const receipts = safeOperations.filter(op => op.operation_type === 'RECEIPT');
-  const receiptsPending = receipts.filter(op => op.status === 'PENDING' || op.status === 'DRAFT' || op.status === 'APPROVED');
-  const receiptsCompleted = receipts.filter(op => op.status === 'COMPLETED');
-  const receiptsLate = receipts.filter(op => op.status === 'CANCELLED'); // Proxy for late/cancelled
+  const receiptsPending = receipts.filter(op => op.status === 'WAITING' || op.status === 'DRAFT' || op.status === 'READY');
+  const receiptsCompleted = receipts.filter(op => op.status === 'DONE');
+  const receiptsLate = receipts.filter(op => op.status === 'CANCELED'); // Proxy for late/cancelled
 
   // Compute Deliveries stats
   const deliveries = safeOperations.filter(op => op.operation_type === 'DELIVERY');
-  const deliveriesPending = deliveries.filter(op => op.status === 'PENDING' || op.status === 'DRAFT');
-  const deliveriesApproved = deliveries.filter(op => op.status === 'APPROVED');
-  const deliveriesCompleted = deliveries.filter(op => op.status === 'COMPLETED');
-  const deliveriesLate = deliveries.filter(op => op.status === 'CANCELLED');
+  const deliveriesPending = deliveries.filter(op => op.status === 'WAITING' || op.status === 'DRAFT');
+  const deliveriesApproved = deliveries.filter(op => op.status === 'READY');
+  const deliveriesCompleted = deliveries.filter(op => op.status === 'DONE');
+  const deliveriesLate = deliveries.filter(op => op.status === 'CANCELED');
 
   // Compute Product Inventory
   const productInventory: Record<string, number> = {};
   safeOperations.forEach(op => {
-    if (op.status !== 'COMPLETED') return;
+    if (op.status !== 'DONE') return;
     
     if (!productInventory[op.product]) {
       productInventory[op.product] = 0;

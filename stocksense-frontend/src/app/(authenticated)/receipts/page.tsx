@@ -11,9 +11,8 @@ export default function ReceiptsPage() {
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
   
-  const receipts = useOperationsStore((state) => 
-    state.operations.filter(op => op.operation_type === 'RECEIPT')
-  );
+  const operations = useOperationsStore((state) => state.operations);
+  const receipts = operations.filter(op => op.operation_type === 'RECEIPT');
 
   const filteredReceipts = receipts.filter(r => 
     r.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 

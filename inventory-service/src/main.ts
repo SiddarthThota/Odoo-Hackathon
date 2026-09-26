@@ -21,7 +21,7 @@ async function bootstrap() {
   // ── CORS ─────────────────────────────────────
   const frontendUrl = configService.get<string>('cors.frontendUrl');
   app.enableCors({
-    origin: frontendUrl,
+    origin: true, // Allow any origin to connect via localtunnel/IP
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, X, Plus } from "lucide-react";
 import Link from "next/link";
 import { useOperationsStore } from "@/store/operations";
+import { useAuthStore } from "@/lib/auth-store";
 
 type AdjustmentStatus = "Draft" | "In Progress" | "Done" | "Cancelled";
 
@@ -21,6 +22,7 @@ export default function AdjustmentDetailPage() {
   const initialLocationId = searchParams.get('locationId');
 
   const operations = useOperationsStore((state) => state.operations);
+  const user = useAuthStore((state) => state.user);
 
   // Data state
   const [status, setStatus] = useState<AdjustmentStatus>(isNew ? "Draft" : "In Progress");
@@ -44,10 +46,10 @@ export default function AdjustmentDetailPage() {
       if (op) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setStatus(
-          op.status === 'COMPLETED' ? 'Done' :
-          op.status === 'APPROVED' ? 'Done' :
-          op.status === 'PENDING' ? 'In Progress' :
-          op.status === 'CANCELLED' ? 'Cancelled' : 'Draft'
+          op.status === 'DONE' ? 'Done' :
+          op.status === 'READY' ? 'Done' :
+          op.status === 'WAITING' ? 'In Progress' :
+          op.status === 'CANCELED' ? 'Cancelled' : 'Draft'
         );
         setReasonCode(op.reason || "COUNT_CORRECTION");
         
@@ -69,14 +71,23 @@ export default function AdjustmentDetailPage() {
 
   const handleStart = () => {
     setStatus("In Progress");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(adjustmentId, { status: "WAITING" });
+    }
   };
 
   const handleValidate = () => {
     setStatus("Done");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(adjustmentId, { status: "DONE" });
+    }
   };
 
   const handleCancel = () => {
     setStatus("Cancelled");
+    if (!isNew) {
+      useOperationsStore.getState().updateOperation(adjustmentId, { status: "CANCELED" });
+    }
   };
 
   const handleCountedChange = (id: number, val: number) => {
@@ -103,7 +114,8 @@ export default function AdjustmentDetailPage() {
       quantity: line ? Math.abs(line.difference) : 0,
       location: line ? line.location : "Main Warehouse",
       direction: line && line.difference < 0 ? "OUT" as const : "IN" as const,
-      reason: reasonCode
+      reason: reasonCode,
+      created_by: user ? `${user.firstName} ${user.lastName}` : 'System'
     };
 
     useOperationsStore.getState().addOperation(newOperation);

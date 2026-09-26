@@ -44,21 +44,21 @@ export class ReceiptsController {
   }
 
   @Post(':id/validate')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Validate a READY receipt and apply stock increment' })
   validate(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.receiptsService.validate(id, user);
   }
 
   @Post(':id/cancel')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Cancel receipt' })
   cancel(@Param('id') id: string) {
     return this.receiptsService.cancel(id);
   }
 
   @Delete(':id')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Delete a DRAFT receipt' })
   remove(@Param('id') id: string) {
     return this.receiptsService.remove(id);

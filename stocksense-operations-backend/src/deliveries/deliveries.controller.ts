@@ -38,28 +38,28 @@ export class DeliveriesController {
   }
 
   @Post(':id/pick')
-  @Roles('WarehouseStaff', 'InventoryManager')
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Pick delivery lines' })
   pick(@Param('id') id: string) {
     return this.deliveriesService.pick(id);
   }
 
   @Post(':id/pack')
-  @Roles('WarehouseStaff', 'InventoryManager')
+  @Roles('STAFF', 'MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Pack picked delivery lines' })
   pack(@Param('id') id: string) {
     return this.deliveriesService.pack(id);
   }
 
   @Post(':id/validate')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Validate delivery and apply stock decrement' })
   validate(@Param('id') id: string, @CurrentUser() user: AuthUser) {
     return this.deliveriesService.validate(id, user);
   }
 
   @Post(':id/cancel')
-  @Roles('InventoryManager')
+  @Roles('MANAGER', 'ADMIN')
   @ApiOperation({ summary: 'Cancel delivery order' })
   cancel(@Param('id') id: string) {
     return this.deliveriesService.cancel(id);

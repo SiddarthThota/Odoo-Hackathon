@@ -19,14 +19,14 @@ services:
     build: .
     environment:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/stocksense_operations
-      JWT_SECRET: replace-with-a-long-random-secret
+      JWT_SECRET: super-secret-access-key-change-me
       INVENTORY_SERVICE_URL: http://host.docker.internal:3001
       INVENTORY_SERVICE_MODE: active
       INVENTORY_SERVICE_TIMEOUT_MS: 5000
       PORT: 3002
       CORS_ORIGIN: http://localhost:3000
       NODE_ENV: development
-      AUTH_DEV_BYPASS: "true"
+      AUTH_DEV_BYPASS: "false"
     ports:
       - "3002:3002"
     depends_on:

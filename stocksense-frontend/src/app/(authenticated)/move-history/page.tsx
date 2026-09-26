@@ -4,24 +4,34 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, FileText, ChevronLeft, ChevronRight, List, LayoutGrid } from "lucide-react";
 
-const mockHistory = [
-  { id: "1", date: "2026-09-01 10:00", ref: "WH/IN/001", product: "Paracetamol 500mg", operation: "Receipt", qty: "+100", source: "Medico Distributors", dest: "Hyderabad Pharmacy", user: "admin", status: "Done" },
-  { id: "2", date: "2026-09-04 14:30", ref: "WH/OUT/001", product: "Paracetamol 500mg", operation: "Delivery", qty: "-30", source: "Hyderabad Pharmacy", dest: "ABC Clinic", user: "staff", status: "Done" },
-  { id: "3", date: "2026-09-10 09:15", ref: "WH/TRANS/001", product: "Paracetamol 500mg", operation: "Internal Transfer", qty: "-20", source: "Hyderabad Pharmacy", dest: "Secunderabad Pharmacy", user: "manager", status: "Done" },
-  { id: "4", date: "2026-09-11 11:20", ref: "WH/ADJ/001", product: "Paracetamol 500mg", operation: "Inventory Adjustment", qty: "-5", source: "Hyderabad Pharmacy", dest: "Inventory Loss", user: "manager", status: "Done" },
-  { id: "5", date: "2026-09-23 16:45", ref: "WH/ADJ/007", product: "Ibuprofen 400mg", operation: "Inventory Adjustment", qty: "-5", source: "Secunderabad Pharmacy", dest: "Inventory Loss", user: "staff", status: "Cancelled" },
-];
+import { useOperationsStore } from "@/store/operations";
 
 export default function MoveHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
+  const operations = useOperationsStore(state => state.operations);
+
+  const displayHistory = operations.map(op => ({
+    id: op.id,
+    date: op.operation_date,
+    ref: op.reference_number,
+    product: op.product,
+    operation: op.operation_type === 'RECEIPT' ? 'Receipt' : op.operation_type === 'DELIVERY' ? 'Delivery' : op.operation_type === 'TRANSFER' ? 'Internal Transfer' : 'Inventory Adjustment',
+    qty: op.direction === 'IN' ? `+${op.quantity}` : `-${op.quantity}`,
+    source: op.source_or_party,
+    dest: op.destination_or_warehouse,
+    user: op.created_by,
+    status: op.status === 'DONE' ? 'Done' : op.status === 'CANCELED' ? 'Cancelled' : op.status === 'DRAFT' ? 'Draft' : 'Ready'
+  }));
+
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
       case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
-      default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
+      case 'Draft': return 'bg-[#FEF9C3] text-[#A16207] border-[#FEF08A]';
+      default: return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
     }
   };
 
@@ -93,7 +103,7 @@ export default function MoveHistoryPage() {
                 </tr>
               </thead>
               <tbody className="text-[11px] text-[#1F2937]">
-                {mockHistory.map((item) => (
+                {displayHistory.map((item) => (
                   <tr key={item.id} className="border-b border-[#F1F2F4] hover:bg-[#F9FAFB] cursor-pointer transition-colors">
                     <td className="h-[40px] px-[16px] text-[#6B7280] whitespace-nowrap">{item.date}</td>
                     <td className="h-[40px] px-[16px] font-medium hover:text-[#1677D2] transition-colors">{item.ref}</td>
@@ -117,7 +127,7 @@ export default function MoveHistoryPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-[#F1F2F4] bg-[#FFFFFF]">
             <div className="text-[10px] text-[#6B7280]">
-              Showing <span className="font-medium text-[#1F2937]">1</span> to <span className="font-medium text-[#1F2937]">4</span> of <span className="font-medium text-[#1F2937]">4</span> results
+              Showing <span className="font-medium text-[#1F2937]">1</span> to <span className="font-medium text-[#1F2937]">{displayHistory.length}</span> of <span className="font-medium text-[#1F2937]">{displayHistory.length}</span> results
             </div>
             <div className="flex items-center gap-[4px]">
               <Button variant="outline" size="icon" className="h-[28px] w-[28px] border-[#E5E7EB] rounded-[6px]" disabled>
@@ -131,7 +141,7 @@ export default function MoveHistoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[16px] mt-[16px]">
-          {mockHistory.map(item => (
+          {displayHistory.map(item => (
             <div key={item.id} className="bg-white border border-[#E5E7EB] rounded-[8px] p-[12px] shadow-sm hover:shadow-md cursor-pointer transition-shadow">
               <div className="flex items-center justify-between mb-[8px]">
                 <span className="text-[11px] font-medium text-[#1F2937]">{item.ref}</span>
