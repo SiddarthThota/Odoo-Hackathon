@@ -28,29 +28,32 @@ export const useAuthStore = create<AuthState>((set) => ({
   isLoading: true,
 
   login: async (email, password) => {
-    try {
-      const response = await axios.post(`${AUTH_API_URL}/login`, { email, password });
-      const { accessToken, refreshToken, user } = response.data.data ? response.data.data : response.data;
-      Cookies.set('accessToken', accessToken);
-      Cookies.set('refreshToken', refreshToken);
+    // MOCK LOGIN FOR VERCEL DEMO
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    if (email === 'admin@stocksense.com' && password === 'Admin@123') {
+      const user: User = { id: '1', email, firstName: 'Admin', lastName: 'User', role: 'ADMIN' };
+      Cookies.set('accessToken', 'mock-token-admin');
       set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      console.error('Login failed', error);
-      throw error;
+    } else if (email === 'manager@stocksense.com' && password === 'Manager@123') {
+      const user: User = { id: '2', email, firstName: 'Manager', lastName: 'User', role: 'MANAGER' };
+      Cookies.set('accessToken', 'mock-token-manager');
+      set({ user, isAuthenticated: true, isLoading: false });
+    } else {
+      // For any other credentials, just let them in as a generic user! (Hackathon friendly)
+      const user: User = { id: '3', email, firstName: email.split('@')[0], lastName: '', role: 'STAFF' };
+      Cookies.set('accessToken', 'mock-token-staff');
+      set({ user, isAuthenticated: true, isLoading: false });
     }
   },
 
   register: async (firstName, lastName, email, password) => {
-    try {
-      const response = await axios.post(`${AUTH_API_URL}/register`, { firstName, lastName, email, password });
-      const { accessToken, refreshToken, user } = response.data.data ? response.data.data : response.data;
-      Cookies.set('accessToken', accessToken);
-      Cookies.set('refreshToken', refreshToken);
-      set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      console.error('Register failed', error);
-      throw error;
-    }
+    // MOCK REGISTER FOR VERCEL DEMO
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const user: User = { id: Date.now().toString(), email, firstName, lastName, role: 'STAFF' };
+    Cookies.set('accessToken', 'mock-token-new');
+    set({ user, isAuthenticated: true, isLoading: false });
   },
 
   logout: () => {
@@ -69,20 +72,19 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
 
-    try {
-      const response = await axios.get(`${AUTH_API_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      set({
-        user: response.data.data ? response.data.data : response.data,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-    } catch (error) {
-      console.error('Auth check failed', error);
-      Cookies.remove('accessToken');
-      Cookies.remove('refreshToken');
-      set({ user: null, isAuthenticated: false, isLoading: false });
-    }
+    // MOCK CHECK AUTH
+    // Just restore a fake user if they have a token
+    const user: User = { 
+      id: 'mock', 
+      email: 'demo@stocksense.com', 
+      firstName: token === 'mock-token-admin' ? 'Admin' : 'Demo', 
+      lastName: 'User', 
+      role: token === 'mock-token-admin' ? 'ADMIN' : 'STAFF' 
+    };
+    set({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+    });
   },
 }));
