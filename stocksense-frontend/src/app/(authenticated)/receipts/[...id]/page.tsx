@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Printer, Check, X, Search, ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
+import { useOperationsStore } from "@/store/operations";
 
 type ReceiptStatus = "Draft" | "Ready" | "Done" | "Cancelled";
 
@@ -14,7 +15,9 @@ export default function ReceiptDetailPage() {
   const receiptId = Array.isArray(rawId) ? rawId.map(decodeURIComponent).join('/') : decodeURIComponent(rawId as string || 'new');
   const isNew = receiptId === 'new';
 
-  // Mock data state
+  const operations = useOperationsStore((state) => state.operations);
+
+  // Data state
   const [status, setStatus] = useState<ReceiptStatus>(isNew ? "Draft" : "Ready");
   const [partner, setPartner] = useState(isNew ? "" : "TechNova Suppliers Ltd");
   const [scheduledDate, setScheduledDate] = useState(isNew ? "" : "2023-11-20 10:00:00");
@@ -24,6 +27,29 @@ export default function ReceiptDetailPage() {
     { id: 1, product: "[EL-001] Wireless Earbuds", demand: 50, done: 0 },
     { id: 2, product: "[EL-002] Power Bank 10k", demand: 200, done: 0 },
   ]);
+
+  useEffect(() => {
+    if (!isNew) {
+      const op = operations.find(o => o.id === receiptId);
+      if (op) {
+        setStatus(
+          op.status === 'COMPLETED' ? 'Done' :
+          op.status === 'APPROVED' ? 'Ready' :
+          op.status === 'PENDING' ? 'Draft' :
+          op.status === 'CANCELLED' ? 'Cancelled' : 'Ready'
+        );
+        setPartner(op.source_or_party);
+        setScheduledDate(op.operation_date + " 10:00:00");
+        setSourceDoc("PO" + op.id.padStart(5, '0'));
+        setProductLines([{
+          id: parseInt(op.id) || Date.now(),
+          product: op.product,
+          demand: op.quantity,
+          done: op.status === 'COMPLETED' ? op.quantity : 0
+        }]);
+      }
+    }
+  }, [isNew, receiptId, operations]);
 
   const handleValidate = () => {
     // In a real app, this would check if Done matches Demand, or ask for backorder
@@ -38,6 +64,27 @@ export default function ReceiptDetailPage() {
 
   const handleDoneChange = (id: number, val: number) => {
     setProductLines(lines => lines.map(l => l.id === id ? { ...l, done: val } : l));
+  };
+
+  const handleSave = () => {
+    if (productLines.length === 0 || !productLines[0].product || !partner) {
+       alert("Please fill required fields");
+       return;
+    }
+    useOperationsStore.getState().addOperation({
+       operation_type: 'RECEIPT',
+       status: 'PENDING',
+       source_or_party: partner,
+       destination_or_warehouse: "Hyderabad Pharmacy",
+       location: "Rack-A-01",
+       product: productLines[0].product,
+       quantity: productLines[0].demand,
+       direction: 'IN',
+       reason: 'PURCHASE',
+       operation_date: new Date().toISOString().split('T')[0],
+       created_by: 'admin'
+    });
+    router.push('/receipts');
   };
 
   return (
@@ -63,7 +110,7 @@ export default function ReceiptDetailPage() {
       {/* Action Bar */}
       <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
         {isNew ? (
-          <button onClick={() => router.push('/receipts')} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+          <button onClick={handleSave} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             Save
           </button>
         ) : status === 'Draft' ? (

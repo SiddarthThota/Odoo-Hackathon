@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Check, X, Plus } from "lucide-react";
 import Link from "next/link";
+import { useOperationsStore } from "@/store/operations";
 
 type TransferStatus = "Draft" | "Ready" | "Done" | "Cancelled";
 
@@ -14,7 +15,9 @@ export default function TransferDetailPage() {
   const transferId = Array.isArray(rawId) ? rawId.map(decodeURIComponent).join('/') : decodeURIComponent(rawId as string || 'new');
   const isNew = transferId === 'new';
 
-  // Mock data state
+  const operations = useOperationsStore((state) => state.operations);
+
+  // Data state
   const [status, setStatus] = useState<TransferStatus>(isNew ? "Draft" : "Ready");
   const [sourceLoc, setSourceLoc] = useState(isNew ? "Main Warehouse" : "Main Warehouse");
   const [destLoc, setDestLoc] = useState(isNew ? "Distribution Center" : "Distribution Center");
@@ -24,6 +27,30 @@ export default function TransferDetailPage() {
     { id: 1, product: "[EL-001] Wireless Earbuds", demand: 50, done: 0 },
     { id: 2, product: "[EL-002] Power Bank 10k", demand: 200, done: 0 },
   ]);
+
+  useEffect(() => {
+    if (!isNew) {
+      const op = operations.find(o => o.id === transferId);
+      if (op) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStatus(
+          op.status === 'COMPLETED' ? 'Done' :
+          op.status === 'APPROVED' ? 'Ready' :
+          op.status === 'PENDING' ? 'Draft' :
+          op.status === 'CANCELLED' ? 'Cancelled' : 'Ready'
+        );
+        setSourceLoc(op.source_or_party);
+        setDestLoc(op.destination_or_warehouse);
+        setScheduledDate(op.operation_date + " 10:00:00");
+        setProductLines([{
+          id: parseInt(op.id) || Date.now(),
+          product: op.product,
+          demand: op.quantity,
+          done: op.status === 'COMPLETED' ? op.quantity : 0
+        }]);
+      }
+    }
+  }, [isNew, transferId, operations]);
 
   const handleMarkReady = () => {
     setStatus("Ready");
@@ -40,6 +67,30 @@ export default function TransferDetailPage() {
 
   const handleDoneChange = (id: number, val: number) => {
     setProductLines(lines => lines.map(l => l.id === id ? { ...l, done: val } : l));
+  };
+
+  const handleSave = () => {
+    const newIdStr = `WH/TRANS/${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    
+    // Create new operation object
+    const newOperation = {
+      id: newIdStr,
+      reference_number: newIdStr,
+      type: "TRANSFER" as const,
+      status: "DRAFT" as const, // DRAFT maps to Draft
+      source_or_party: sourceLoc,
+      destination_or_warehouse: destLoc,
+      scheduled_date: scheduledDate || new Date().toISOString().split('T')[0],
+      operation_date: scheduledDate ? scheduledDate.split(' ')[0] : new Date().toISOString().split('T')[0],
+      product: productLines.length > 0 ? productLines[0].product : "Unknown Product", // We just take the first one for simplicity like the CSV
+      quantity: productLines.reduce((acc, curr) => acc + curr.demand, 0),
+      location: sourceLoc,
+      direction: "INTERNAL" as const,
+      reason: "Internal Transfer"
+    };
+
+    useOperationsStore.getState().addOperation(newOperation);
+    router.push('/transfers');
   };
 
   return (
@@ -67,7 +118,7 @@ export default function TransferDetailPage() {
       {/* Action Bar */}
       <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
         {isNew ? (
-          <button onClick={() => router.push('/transfers')} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+          <button onClick={handleSave} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             Save
           </button>
         ) : status === 'Draft' ? (

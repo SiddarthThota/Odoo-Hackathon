@@ -4,27 +4,31 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const mockTransfers = [
-  { id: "WH/TRANS/001", date: "2026-09-10", source: "Hyderabad Pharmacy", destination: "Secunderabad Pharmacy", status: "Done" },
-  { id: "WH/TRANS/002", date: "2026-09-12", source: "Secunderabad Pharmacy", destination: "Banjara Pharmacy", status: "Done" },
-  { id: "WH/TRANS/003", date: "2026-09-16", source: "Hyderabad Pharmacy", destination: "Banjara Pharmacy", status: "Ready" },
-  { id: "WH/TRANS/004", date: "2026-09-17", source: "Banjara Pharmacy", destination: "Hyderabad Pharmacy", status: "Waiting" },
-  { id: "WH/TRANS/005", date: "2026-09-18", source: "Hyderabad Pharmacy", destination: "Secunderabad Pharmacy", status: "Cancelled" },
-  { id: "WH/TRANS/006", date: "2026-09-19", source: "Secunderabad Pharmacy", destination: "Hyderabad Pharmacy", status: "Done" },
-];
+import { useOperationsStore } from "@/store/operations";
 
 export default function TransfersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
 
+  const transfers = useOperationsStore((state) => 
+    state.operations.filter(op => op.operation_type === 'TRANSFER')
+  );
+
+  const filteredTransfers = transfers.filter(t => 
+    t.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    t.source_or_party.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.product.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
-      case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
-      case 'Waiting': return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
-      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
+    switch(status.toUpperCase()) {
+      case 'COMPLETED': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
+      case 'APPROVED': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
+      case 'PENDING': return 'bg-[#FEF08A] text-[#B45309] border-[#FDE047]';
+      case 'CANCELLED': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
+      case 'DRAFT': return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -101,19 +105,21 @@ export default function TransfersPage() {
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Date</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Source Warehouse</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Destination Warehouse</th>
+                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Product</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Status</th>
                 </tr>
               </thead>
               <tbody className="text-[11px] text-[#1F2937]">
-                {mockTransfers.map((transfer) => (
+                {filteredTransfers.map((transfer) => (
                   <tr key={transfer.id} onClick={() => router.push(`/transfers/${transfer.id}`)} className="border-b border-[#F1F2F4] hover:bg-[#F9FAFB] cursor-pointer transition-colors group">
                     <td className="h-[40px] px-[16px]" onClick={e => e.stopPropagation()}>
                       <input type="checkbox" className="rounded-[4px] border-[#E5E7EB] text-[#1677D2] focus:ring-[#1677D2]" />
                     </td>
-                    <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{transfer.id}</td>
-                    <td className="h-[40px] px-[16px] text-[#6B7280]">{transfer.date}</td>
-                    <td className="h-[40px] px-[16px]">{transfer.source}</td>
-                    <td className="h-[40px] px-[16px]">{transfer.destination}</td>
+                    <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{transfer.reference_number}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{transfer.operation_date}</td>
+                    <td className="h-[40px] px-[16px]">{transfer.source_or_party}</td>
+                    <td className="h-[40px] px-[16px]">{transfer.location}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{transfer.product}</td>
                     <td className="h-[40px] px-[16px]">
                       <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[999px] text-[9px] font-medium border ${getStatusColor(transfer.status)}`}>
                         {transfer.status}
@@ -121,6 +127,13 @@ export default function TransfersPage() {
                     </td>
                   </tr>
                 ))}
+                {filteredTransfers.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="h-[60px] text-center text-[#6B7280]">
+                      No transfers found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -128,7 +141,7 @@ export default function TransfersPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-[#F1F2F4] bg-[#FFFFFF]">
             <div className="text-[10px] text-[#6B7280]">
-              Showing <span className="font-medium text-[#1F2937]">1</span> to <span className="font-medium text-[#1F2937]">3</span> of <span className="font-medium text-[#1F2937]">3</span> results
+              Showing <span className="font-medium text-[#1F2937]">{filteredTransfers.length > 0 ? 1 : 0}</span> to <span className="font-medium text-[#1F2937]">{filteredTransfers.length}</span> of <span className="font-medium text-[#1F2937]">{filteredTransfers.length}</span> results
             </div>
             <div className="flex items-center gap-[4px]">
               <Button variant="outline" size="icon" className="h-[28px] w-[28px] border-[#E5E7EB] rounded-[6px]" disabled>
@@ -142,22 +155,25 @@ export default function TransfersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px] mt-[16px]">
-          {["Draft", "Waiting", "Ready", "Done", "Cancelled"].map(statusCol => (
-            <div key={statusCol} className="flex flex-col gap-[12px]">
-              <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
-                {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockTransfers.filter(d => d.status === statusCol).length}</span>
-              </h3>
-              {mockTransfers.filter(d => d.status === statusCol).map(transfer => (
-                <div key={transfer.id} onClick={() => router.push(`/transfers/${transfer.id}`)} className="bg-white border border-[#E5E7EB] rounded-[8px] p-[12px] shadow-sm hover:shadow-md cursor-pointer transition-shadow">
-                  <div className="flex items-center justify-between mb-[8px]">
-                    <span className="text-[11px] font-medium text-[#1F2937]">{transfer.id}</span>
+          {["DRAFT", "PENDING", "APPROVED", "COMPLETED", "CANCELLED"].map(statusCol => {
+            const colTransfers = filteredTransfers.filter(d => d.status === statusCol);
+            return (
+              <div key={statusCol} className="flex flex-col gap-[12px]">
+                <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
+                  {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{colTransfers.length}</span>
+                </h3>
+                {colTransfers.map(transfer => (
+                  <div key={transfer.id} onClick={() => router.push(`/transfers/${transfer.id}`)} className="bg-white border border-[#E5E7EB] rounded-[8px] p-[12px] shadow-sm hover:shadow-md cursor-pointer transition-shadow">
+                    <div className="flex items-center justify-between mb-[8px]">
+                      <span className="text-[11px] font-medium text-[#1F2937]">{transfer.reference_number}</span>
+                    </div>
+                    <div className="text-[11px] text-[#6B7280] mb-[4px]">{transfer.source_or_party} ➔ {transfer.location}</div>
+                    <div className="text-[10px] text-[#9CA3AF]">{transfer.operation_date}</div>
                   </div>
-                  <div className="text-[11px] text-[#6B7280] mb-[4px]">{transfer.source} ➔ {transfer.destination}</div>
-                  <div className="text-[10px] text-[#9CA3AF]">{transfer.date}</div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

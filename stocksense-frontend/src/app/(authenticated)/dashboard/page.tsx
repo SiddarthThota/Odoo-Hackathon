@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ArrowUpRight, ArrowDownRight, ChevronDown, Package, Activity, MoreHorizontal } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
+import { useOperationsStore } from "@/store/operations";
 
 const revenueData = [
   { name: "Jan", value: 4000 },
@@ -25,6 +27,60 @@ const stockStatusData = [
 ];
 
 export default function DashboardPage() {
+  const operations = useOperationsStore((state) => state.operations);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="mx-auto max-w-[1440px] w-full px-[24px] pt-[22px] pb-[32px] flex items-center justify-center min-h-[60vh]">
+        <div className="text-[#6B7280]">Loading dashboard...</div>
+      </div>
+    );
+  }
+
+  const safeOperations = Array.isArray(operations) ? operations : [];
+
+  // Compute Receipts stats
+  const receipts = safeOperations.filter(op => op.operation_type === 'RECEIPT');
+  const receiptsPending = receipts.filter(op => op.status === 'PENDING' || op.status === 'DRAFT' || op.status === 'APPROVED');
+  const receiptsCompleted = receipts.filter(op => op.status === 'COMPLETED');
+  const receiptsLate = receipts.filter(op => op.status === 'CANCELLED'); // Proxy for late/cancelled
+
+  // Compute Deliveries stats
+  const deliveries = safeOperations.filter(op => op.operation_type === 'DELIVERY');
+  const deliveriesPending = deliveries.filter(op => op.status === 'PENDING' || op.status === 'DRAFT');
+  const deliveriesApproved = deliveries.filter(op => op.status === 'APPROVED');
+  const deliveriesCompleted = deliveries.filter(op => op.status === 'COMPLETED');
+  const deliveriesLate = deliveries.filter(op => op.status === 'CANCELLED');
+
+  // Compute Product Inventory
+  const productInventory: Record<string, number> = {};
+  safeOperations.forEach(op => {
+    if (op.status !== 'COMPLETED') return;
+    
+    if (!productInventory[op.product]) {
+      productInventory[op.product] = 0;
+    }
+    
+    if (op.direction === 'IN') {
+      productInventory[op.product] += op.quantity;
+    } else if (op.direction === 'OUT') {
+      productInventory[op.product] -= op.quantity;
+    }
+  });
+
+  const topItems = Object.entries(productInventory)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 4)
+    .map(([name, quantity]) => ({ name, quantity, category: "Pharma" }));
+    
+  const totalItemsVolume = Object.values(productInventory).reduce((acc, qty) => acc + qty, 0);
+
   return (
     <div className="mx-auto max-w-[1440px] w-full px-[24px] pt-[22px] pb-[32px]">
       
@@ -58,15 +114,15 @@ export default function DashboardPage() {
             </button>
           </div>
           <div>
-            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">12 <span className="text-[14px] font-normal text-[#6B7280]">to receive</span></div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">{receiptsPending.length} <span className="text-[14px] font-normal text-[#6B7280]">to receive</span></div>
             <div className="flex items-center gap-4 text-[12px]">
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#E5484D]"></span>
-                <span className="text-[#6B7280]">2 Late</span>
+                <span className="text-[#6B7280]">{receiptsLate.length} Late/Cancelled</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
-                <span className="text-[#6B7280]">10 Operations</span>
+                <span className="text-[#6B7280]">{receiptsCompleted.length} Completed</span>
               </div>
             </div>
           </div>
@@ -86,19 +142,19 @@ export default function DashboardPage() {
             </button>
           </div>
           <div>
-            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">8 <span className="text-[14px] font-normal text-[#6B7280]">to deliver</span></div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[8px]">{deliveriesPending.length + deliveriesApproved.length} <span className="text-[14px] font-normal text-[#6B7280]">to deliver</span></div>
             <div className="flex items-center gap-4 text-[12px]">
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#E5484D]"></span>
-                <span className="text-[#6B7280]">1 Late</span>
+                <span className="text-[#6B7280]">{deliveriesLate.length} Late</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#F5A623]"></span>
-                <span className="text-[#6B7280]">3 Waiting</span>
+                <span className="text-[#6B7280]">{deliveriesPending.length} Waiting</span>
               </div>
               <div className="flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
-                <span className="text-[#6B7280]">4 Operations</span>
+                <span className="text-[#6B7280]">{deliveriesCompleted.length} Completed</span>
               </div>
             </div>
           </div>
@@ -134,7 +190,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <div>
-            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[4px]">12,869</div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[4px]">{totalItemsVolume}</div>
             <div className="flex items-center text-[9px] md:text-[10px]">
               <ArrowUpRight className="h-[12px] w-[12px] text-[#1677D2] mr-[2px]" strokeWidth={2} />
               <span className="text-[#1677D2] font-medium">+8.1%</span>
@@ -152,7 +208,7 @@ export default function DashboardPage() {
             </button>
           </div>
           <div>
-            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[4px]">4,128</div>
+            <div className="text-[24px] font-semibold text-[#111827] leading-[1.1] mb-[4px]">{Object.keys(productInventory).length}</div>
             <div className="flex items-center text-[9px] md:text-[10px]">
               <ArrowUpRight className="h-[12px] w-[12px] text-[#1677D2] mr-[2px]" strokeWidth={2} />
               <span className="text-[#1677D2] font-medium">+5.2%</span>
@@ -260,7 +316,7 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[20px] md:text-[22px] font-semibold text-[#1F2937] leading-[1.1]">4,128</span>
+                <span className="text-[20px] md:text-[22px] font-semibold text-[#1F2937] leading-[1.1]">{Object.keys(productInventory).length}</span>
                 <span className="text-[9px] md:text-[10px] text-[#6B7280] mt-[2px]">Total SKUs</span>
               </div>
             </div>
@@ -308,26 +364,13 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="text-[10px] md:text-[11px] text-[#1F2937]">
-                <tr className="border-b border-[#F1F2F4] hover:bg-[#F8FAFC]">
-                  <td className="h-[32px] md:h-[36px] px-[8px] font-medium">Wireless Bud Pro</td>
-                  <td className="h-[32px] md:h-[36px] px-[8px]"><span className="inline-flex items-center px-[6px] py-[2px] rounded-full text-[9px] font-medium bg-[#D9E6FB] text-[#2F5FDB]">Electronics</span></td>
-                  <td className="h-[32px] md:h-[36px] px-[8px] text-right font-medium">1240 Pcs</td>
-                </tr>
-                <tr className="border-b border-[#F1F2F4] hover:bg-[#F8FAFC]">
-                  <td className="h-[32px] md:h-[36px] px-[8px] font-medium">Industrial Motor</td>
-                  <td className="h-[32px] md:h-[36px] px-[8px]"><span className="inline-flex items-center px-[6px] py-[2px] rounded-full text-[9px] font-medium bg-[#F3F4F6] text-[#4B5563]">Machinery</span></td>
-                  <td className="h-[32px] md:h-[36px] px-[8px] text-right font-medium">680 Pcs</td>
-                </tr>
-                <tr className="border-b border-[#F1F2F4] hover:bg-[#F8FAFC]">
-                  <td className="h-[32px] md:h-[36px] px-[8px] font-medium">Packaging Box</td>
-                  <td className="h-[32px] md:h-[36px] px-[8px]"><span className="inline-flex items-center px-[6px] py-[2px] rounded-full text-[9px] font-medium bg-[#F3F4F6] text-[#4B5563]">Packaging</span></td>
-                  <td className="h-[32px] md:h-[36px] px-[8px] text-right font-medium">4500 Pcs</td>
-                </tr>
-                <tr className="hover:bg-[#F8FAFC]">
-                  <td className="h-[32px] md:h-[36px] px-[8px] font-medium">Lithium Battery</td>
-                  <td className="h-[32px] md:h-[36px] px-[8px]"><span className="inline-flex items-center px-[6px] py-[2px] rounded-full text-[9px] font-medium bg-[#D9E6FB] text-[#2F5FDB]">Electronics</span></td>
-                  <td className="h-[32px] md:h-[36px] px-[8px] text-right font-medium">850 Pcs</td>
-                </tr>
+                {topItems.map((item, i) => (
+                  <tr key={i} className="border-b border-[#F1F2F4] hover:bg-[#F8FAFC]">
+                    <td className="h-[32px] md:h-[36px] px-[8px] font-medium">{item.name}</td>
+                    <td className="h-[32px] md:h-[36px] px-[8px]"><span className="inline-flex items-center px-[6px] py-[2px] rounded-full text-[9px] font-medium bg-[#D9E6FB] text-[#2F5FDB]">{item.category}</span></td>
+                    <td className="h-[32px] md:h-[36px] px-[8px] text-right font-medium">{item.quantity} Pcs</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -346,7 +389,7 @@ export default function DashboardPage() {
                 <div className="text-[10px] text-[#6B7280] mb-[2px]">Inbound</div>
                 <div className="flex items-end justify-between">
                   <div className="text-[18px] font-semibold text-[#1F2937] leading-[1.1] flex items-center gap-1">
-                    <span className="text-[#16A34A] text-[14px]">⬇</span> 1,600
+                    <span className="text-[#16A34A] text-[14px]">⬇</span> {receiptsCompleted.reduce((acc, op) => acc + op.quantity, 0)}
                   </div>
                   <div className="text-[10px] text-[#6B7280] font-medium">Units Received</div>
                 </div>
@@ -363,7 +406,7 @@ export default function DashboardPage() {
                 <div className="text-[10px] text-[#6B7280] mb-[2px]">Outbound</div>
                 <div className="flex items-end justify-between">
                   <div className="text-[18px] font-semibold text-[#1F2937] leading-[1.1] flex items-center gap-1">
-                    <span className="text-[#E5484D] text-[14px]">⬆</span> 1,595
+                    <span className="text-[#E5484D] text-[14px]">⬆</span> {deliveriesCompleted.reduce((acc, op) => acc + op.quantity, 0)}
                   </div>
                   <div className="text-[10px] text-[#6B7280] font-medium">Units Shipped</div>
                 </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Check, X, Plus } from "lucide-react";
 import Link from "next/link";
+import { useOperationsStore } from "@/store/operations";
 
 type AdjustmentStatus = "Draft" | "In Progress" | "Done" | "Cancelled";
 
@@ -19,7 +20,9 @@ export default function AdjustmentDetailPage() {
   const initialProductId = searchParams.get('productId');
   const initialLocationId = searchParams.get('locationId');
 
-  // Mock data state
+  const operations = useOperationsStore((state) => state.operations);
+
+  // Data state
   const [status, setStatus] = useState<AdjustmentStatus>(isNew ? "Draft" : "In Progress");
   const [productLines, setProductLines] = useState([
     ...(initialProductId ? [{
@@ -35,6 +38,35 @@ export default function AdjustmentDetailPage() {
   ]);
   const [reasonCode, setReasonCode] = useState("COUNT_CORRECTION");
 
+  useEffect(() => {
+    if (!isNew) {
+      const op = operations.find(o => o.id === adjustmentId);
+      if (op) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStatus(
+          op.status === 'COMPLETED' ? 'Done' :
+          op.status === 'APPROVED' ? 'Done' :
+          op.status === 'PENDING' ? 'In Progress' :
+          op.status === 'CANCELLED' ? 'Cancelled' : 'Draft'
+        );
+        setReasonCode(op.reason || "COUNT_CORRECTION");
+        
+        // Mock onHand to be exactly what was there + difference (if OUT, difference is -quantity, if IN, +quantity)
+        const diff = op.direction === 'OUT' ? -op.quantity : op.quantity;
+        const counted = 100 + diff; // fake onHand base 100
+        
+        setProductLines([{
+          id: parseInt(op.id) || Date.now(),
+          product: op.product,
+          location: op.location,
+          counted: counted,
+          difference: diff,
+          onHand: 100
+        }]);
+      }
+    }
+  }, [isNew, adjustmentId, operations]);
+
   const handleStart = () => {
     setStatus("In Progress");
   };
@@ -49,6 +81,33 @@ export default function AdjustmentDetailPage() {
 
   const handleCountedChange = (id: number, val: number) => {
     setProductLines(lines => lines.map(l => l.id === id ? { ...l, counted: val, difference: val - l.onHand } : l));
+  };
+
+  const handleSave = () => {
+    const newIdStr = `WH/ADJ/${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    
+    // We get the first product line
+    const line = productLines.length > 0 ? productLines[0] : null;
+    
+    // Create new operation object
+    const newOperation = {
+      id: newIdStr,
+      reference_number: newIdStr,
+      type: "ADJUSTMENT" as const,
+      status: "DRAFT" as const, // Draft
+      source_or_party: "Inventory",
+      destination_or_warehouse: "Inventory",
+      scheduled_date: new Date().toISOString().split('T')[0],
+      operation_date: new Date().toISOString().split('T')[0],
+      product: line ? line.product : "Unknown Product",
+      quantity: line ? Math.abs(line.difference) : 0,
+      location: line ? line.location : "Main Warehouse",
+      direction: line && line.difference < 0 ? "OUT" as const : "IN" as const,
+      reason: reasonCode
+    };
+
+    useOperationsStore.getState().addOperation(newOperation);
+    router.push('/adjustments');
   };
 
   return (
@@ -75,7 +134,11 @@ export default function AdjustmentDetailPage() {
 
       {/* Action Bar */}
       <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
-        {status === 'Draft' ? (
+        {isNew ? (
+          <button onClick={handleSave} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+            Save
+          </button>
+        ) : status === 'Draft' ? (
           <button onClick={handleStart} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             Start Inventory
           </button>

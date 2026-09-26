@@ -4,28 +4,30 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Plus, FileText, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-const mockDeliveries = [
-  { id: "WH/OUT/001", date: "2026-09-04", partner: "ABC Clinic", location: "Rack-A-01", status: "Done" },
-  { id: "WH/OUT/002", date: "2026-09-06", partner: "CityCare Hospital", location: "Rack-A-02", status: "Done" },
-  { id: "WH/OUT/003", date: "2026-09-08", partner: "GreenCross Clinic", location: "Rack-B-01", status: "Ready" },
-  { id: "WH/OUT/004", date: "2026-09-12", partner: "Sunrise Medicals", location: "Rack-C-01", status: "Waiting" },
-  { id: "WH/OUT/005", date: "2026-09-13", partner: "WellCare Hospital", location: "Rack-C-02", status: "Done" },
-  { id: "WH/OUT/006", date: "2026-09-14", partner: "Prime Clinic", location: "Rack-B-02", status: "Cancelled" },
-  { id: "WH/OUT/007", date: "2026-09-15", partner: "Apollo Care Center", location: "Rack-A-03", status: "Done" },
-];
+import { useOperationsStore } from "@/store/operations";
 
 export default function DeliveriesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
   const router = useRouter();
 
+  const deliveries = useOperationsStore((state) => 
+    state.operations.filter(op => op.operation_type === 'DELIVERY')
+  );
+
+  const filteredDeliveries = deliveries.filter(d => 
+    d.reference_number.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    d.source_or_party.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.product.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const getStatusColor = (status: string) => {
-    switch(status) {
-      case 'Done': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
-      case 'Ready': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
-      case 'Waiting': return 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]';
-      case 'Cancelled': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
+    switch(status.toUpperCase()) {
+      case 'COMPLETED': return 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]';
+      case 'APPROVED': return 'bg-[#EFF6FF] text-[#1677D2] border-[#BFDBFE]';
+      case 'PENDING': return 'bg-[#FEF08A] text-[#B45309] border-[#FDE047]';
+      case 'CANCELLED': return 'bg-[#FEF2F2] text-[#DC2626] border-[#FECACA]';
+      case 'DRAFT': return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
       default: return 'bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB]';
     }
   };
@@ -102,19 +104,21 @@ export default function DeliveriesPage() {
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Date</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Partner</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Location</th>
+                  <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Product</th>
                   <th className="h-[36px] px-[16px] text-[10px] font-medium text-[#6B7280] border-b border-[#E5E7EB] bg-[#F7F8FA]">Status</th>
                 </tr>
               </thead>
               <tbody className="text-[11px] text-[#1F2937]">
-                {mockDeliveries.map((delivery) => (
+                {filteredDeliveries.map((delivery) => (
                   <tr key={delivery.id} onClick={() => router.push(`/deliveries/${delivery.id}`)} className="border-b border-[#F1F2F4] hover:bg-[#F9FAFB] cursor-pointer transition-colors group">
                     <td className="h-[40px] px-[16px]" onClick={e => e.stopPropagation()}>
                       <input type="checkbox" className="rounded-[4px] border-[#E5E7EB] text-[#1677D2] focus:ring-[#1677D2]" />
                     </td>
-                    <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{delivery.id}</td>
-                    <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.date}</td>
-                    <td className="h-[40px] px-[16px]">{delivery.partner}</td>
+                    <td className="h-[40px] px-[16px] font-medium group-hover:text-[#1677D2] transition-colors">{delivery.reference_number}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.operation_date}</td>
+                    <td className="h-[40px] px-[16px]">{delivery.source_or_party}</td>
                     <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.location}</td>
+                    <td className="h-[40px] px-[16px] text-[#6B7280]">{delivery.product}</td>
                     <td className="h-[40px] px-[16px]">
                       <span className={`inline-flex items-center px-[8px] py-[2px] rounded-[999px] text-[9px] font-medium border ${getStatusColor(delivery.status)}`}>
                         {delivery.status}
@@ -122,6 +126,13 @@ export default function DeliveriesPage() {
                     </td>
                   </tr>
                 ))}
+                {filteredDeliveries.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="h-[60px] text-center text-[#6B7280]">
+                      No deliveries found
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -129,7 +140,7 @@ export default function DeliveriesPage() {
           {/* Pagination */}
           <div className="flex items-center justify-between px-[16px] py-[12px] border-t border-[#F1F2F4] bg-[#FFFFFF]">
             <div className="text-[10px] text-[#6B7280]">
-              Showing <span className="font-medium text-[#1F2937]">1</span> to <span className="font-medium text-[#1F2937]">4</span> of <span className="font-medium text-[#1F2937]">4</span> results
+              Showing <span className="font-medium text-[#1F2937]">{filteredDeliveries.length > 0 ? 1 : 0}</span> to <span className="font-medium text-[#1F2937]">{filteredDeliveries.length}</span> of <span className="font-medium text-[#1F2937]">{filteredDeliveries.length}</span> results
             </div>
             <div className="flex items-center gap-[4px]">
               <Button variant="outline" size="icon" className="h-[28px] w-[28px] border-[#E5E7EB] rounded-[6px]" disabled>
@@ -143,22 +154,25 @@ export default function DeliveriesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-[16px] mt-[16px]">
-          {["Draft", "Waiting", "Ready", "Done", "Cancelled"].map(statusCol => (
-            <div key={statusCol} className="flex flex-col gap-[12px]">
-              <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
-                {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{mockDeliveries.filter(d => d.status === statusCol).length}</span>
-              </h3>
-              {mockDeliveries.filter(d => d.status === statusCol).map(delivery => (
-                <div key={delivery.id} onClick={() => router.push(`/deliveries/${delivery.id}`)} className="bg-white border border-[#E5E7EB] rounded-[8px] p-[12px] shadow-sm hover:shadow-md cursor-pointer transition-shadow">
-                  <div className="flex items-center justify-between mb-[8px]">
-                    <span className="text-[11px] font-medium text-[#1F2937]">{delivery.id}</span>
+          {["DRAFT", "PENDING", "APPROVED", "COMPLETED", "CANCELLED"].map(statusCol => {
+            const colDeliveries = filteredDeliveries.filter(d => d.status === statusCol);
+            return (
+              <div key={statusCol} className="flex flex-col gap-[12px]">
+                <h3 className="text-[12px] font-medium text-[#6B7280] flex items-center justify-between">
+                  {statusCol} <span className="bg-[#E5E7EB] text-[#374151] px-[6px] py-[2px] rounded-full text-[10px]">{colDeliveries.length}</span>
+                </h3>
+                {colDeliveries.map(delivery => (
+                  <div key={delivery.id} onClick={() => router.push(`/deliveries/${delivery.id}`)} className="bg-white border border-[#E5E7EB] rounded-[8px] p-[12px] shadow-sm hover:shadow-md cursor-pointer transition-shadow">
+                    <div className="flex items-center justify-between mb-[8px]">
+                      <span className="text-[11px] font-medium text-[#1F2937]">{delivery.reference_number}</span>
+                    </div>
+                    <div className="text-[11px] text-[#6B7280] mb-[4px]">{delivery.source_or_party}</div>
+                    <div className="text-[10px] text-[#9CA3AF]">{delivery.operation_date}</div>
                   </div>
-                  <div className="text-[11px] text-[#6B7280] mb-[4px]">{delivery.partner}</div>
-                  <div className="text-[10px] text-[#9CA3AF]">{delivery.date}</div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

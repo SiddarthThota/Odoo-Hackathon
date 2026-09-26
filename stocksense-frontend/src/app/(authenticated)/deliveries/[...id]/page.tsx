@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Printer, Check, X, Box, ChevronDown, Plus } from "lucide-react";
 import Link from "next/link";
+import { useOperationsStore } from "@/store/operations";
 
 type DeliveryStatus = "Draft" | "Waiting" | "Ready" | "Done" | "Cancelled";
 
@@ -14,7 +15,9 @@ export default function DeliveryDetailPage() {
   const deliveryId = Array.isArray(rawId) ? rawId.map(decodeURIComponent).join('/') : decodeURIComponent(rawId as string || 'new');
   const isNew = deliveryId === 'new';
 
-  // Mock data state
+  const operations = useOperationsStore((state) => state.operations);
+
+  // Data state
   const [status, setStatus] = useState<DeliveryStatus>(isNew ? "Draft" : "Ready");
   const [partner, setPartner] = useState(isNew ? "" : "Acme Corp");
   const [scheduledDate, setScheduledDate] = useState(isNew ? "" : "2023-11-21 14:00:00");
@@ -24,6 +27,30 @@ export default function DeliveryDetailPage() {
     { id: 1, product: "[EL-001] Wireless Earbuds", demand: 25, reserved: 25, done: 0 },
     { id: 2, product: "[EL-002] Power Bank 10k", demand: 10, reserved: 5, done: 0 }, // Partial reserve example
   ]);
+
+  useEffect(() => {
+    if (!isNew) {
+      const op = operations.find(o => o.id === deliveryId);
+      if (op) {
+        setStatus(
+          op.status === 'COMPLETED' ? 'Done' :
+          op.status === 'APPROVED' ? 'Ready' :
+          op.status === 'PENDING' ? 'Waiting' :
+          op.status === 'CANCELLED' ? 'Cancelled' : 'Draft'
+        );
+        setPartner(op.source_or_party);
+        setScheduledDate(op.operation_date + " 14:00:00");
+        setSourceDoc("SO" + op.id.padStart(5, '0'));
+        setProductLines([{
+          id: parseInt(op.id) || Date.now(),
+          product: op.product,
+          demand: op.quantity,
+          reserved: op.status === 'COMPLETED' || op.status === 'APPROVED' ? op.quantity : 0,
+          done: op.status === 'COMPLETED' ? op.quantity : 0
+        }]);
+      }
+    }
+  }, [isNew, deliveryId, operations]);
 
   const handleValidate = () => {
     // Fill done with reserved, then mark as Done
@@ -37,6 +64,27 @@ export default function DeliveryDetailPage() {
 
   const handleDoneChange = (id: number, val: number) => {
     setProductLines(lines => lines.map(l => l.id === id ? { ...l, done: val } : l));
+  };
+
+  const handleSave = () => {
+    if (productLines.length === 0 || !productLines[0].product || !partner) {
+       alert("Please fill required fields");
+       return;
+    }
+    useOperationsStore.getState().addOperation({
+       operation_type: 'DELIVERY',
+       status: 'PENDING',
+       source_or_party: partner,
+       destination_or_warehouse: "Hyderabad Pharmacy",
+       location: "Rack-A-01",
+       product: productLines[0].product,
+       quantity: productLines[0].demand,
+       direction: 'OUT',
+       reason: 'SALE',
+       operation_date: new Date().toISOString().split('T')[0],
+       created_by: 'admin'
+    });
+    router.push('/deliveries');
   };
 
   const checkAvailability = () => {
@@ -73,7 +121,7 @@ export default function DeliveryDetailPage() {
       {/* Action Bar */}
       <div className="flex items-center gap-[12px] bg-[#FFFFFF] border border-[#E5E7EB] rounded-[8px] px-[16px] py-[12px] shadow-[0_1px_2px_rgba(0,0,0,0.03)] mb-[24px]">
         {isNew ? (
-          <button onClick={() => router.push('/deliveries')} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
+          <button onClick={handleSave} className="h-[32px] px-[16px] bg-[#1677D2] text-white text-[11px] font-medium rounded-[6px] hover:bg-[#0B6FCB] transition-colors flex items-center gap-[6px]">
             Save
           </button>
         ) : status === 'Draft' ? (
