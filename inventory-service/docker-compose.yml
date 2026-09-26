@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stocksense-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: stocksense
+      POSTGRES_PASSWORD: stocksense_password
+      POSTGRES_DB: stocksense_inventory
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U stocksense -d stocksense_inventory']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - stocksense-network
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stocksense-inventory
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://stocksense:stocksense_password@postgres:5432/stocksense_inventory?schema=public
+      JWT_ACCESS_SECRET: super-secret-access-key-change-me
+      JWT_REFRESH_SECRET: super-secret-refresh-key-change-me
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      FRONTEND_URL: http://localhost:3000
+      THROTTLE_TTL: 60000
+      THROTTLE_LIMIT: 100
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - stocksense-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  stocksense-network:
+    driver: bridge
