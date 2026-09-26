@@ -1,5 +1,7 @@
 # InventraX - Odoo Hackathon Project
 
+🚀 **Live Demo:** [https://odoo-hackathon-beige.vercel.app](https://odoo-hackathon-beige.vercel.app)
+*(Test the live frontend with real Authentication and E2E Operations UI!)*
 ## Overview
 
 InventraX (formerly StockSense) is a comprehensive, full-stack Warehouse & Inventory Management System. The project aims to deliver a robust, scalable, and visually premium dashboard for tracking inventory lifecycle, including receipts, deliveries, transfers, and adjustments.
